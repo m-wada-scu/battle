@@ -1,0 +1,180 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #efefef;
+  color: #000;
+  font-family: 'MS PGothic', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+a {
+  color: #0000ee;
+}
+
+a:visited {
+  color: #551a8b;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px;
+}
+
+.thread {
+  background: #f0f0e0;
+  border: 1px solid #aaa;
+}
+
+.thread-header {
+  background: #ccffcc;
+  border-bottom: 1px solid #aaa;
+  padding: 8px 12px;
+}
+
+.board-name {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #333;
+}
+
+.thread-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #cc0000;
+}
+
+.thread-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #333;
+}
+
+.thread-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 12px;
+  background: #e8e8d8;
+  border-bottom: 1px solid #ccc;
+  font-size: 12px;
+}
+
+.toolbar-item {
+  color: #444;
+}
+
+.trigger-button {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border: 1px solid #888;
+  background: #fff;
+}
+
+.trigger-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.post-list {
+  padding: 4px 0;
+}
+
+.post {
+  padding: 6px 12px;
+  border-bottom: 1px dotted #ccc;
+}
+
+.post-op {
+  background: #ffffee;
+}
+
+.post-header {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.post-number {
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.post-name {
+  color: #008000;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.post-date,
+.post-id {
+  color: #666;
+  margin-right: 8px;
+  font-size: 11px;
+}
+
+.post-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.post-body .anchor {
+  color: #0000ee;
+  font-weight: bold;
+}
+
+.thread-footer {
+  padding: 12px;
+  font-size: 11px;
+  color: #666;
+  background: #e8e8d8;
+  border-top: 1px solid #ccc;
+}
+
+.thread-footer p {
+  margin: 0 0 4px;
+}
+
+.footer-note {
+  color: #999;
+}
+
+.status-message {
+  padding: 24px;
+  text-align: center;
+}
+
+.error-box {
+  background: #fff0f0;
+  border: 1px solid #cc0000;
+  padding: 16px;
+  margin: 16px;
+}
+
+.error-box button {
+  margin-top: 8px;
+}
+
+.inline-error {
+  margin: 0;
+  padding: 6px 12px;
+  color: #cc0000;
+  background: #fff0f0;
+  font-size: 12px;
+}
