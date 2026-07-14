@@ -31,6 +31,50 @@ export interface RespondResult {
   content: string
 }
 
+export interface SkippedResult {
+  ok: true
+  skipped: true
+  reason: 'too_soon'
+  retryAfterMs: number
+}
+
+async function getLatestPostCreatedAt(): Promise<string | null> {
+  const supabase = createServiceClient()
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select('created_at')
+    .order('post_number', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`Failed to fetch latest post: ${error.message}`)
+  }
+
+  return (data as { created_at: string } | null)?.created_at ?? null
+}
+
+export async function generateNextPostIfDue(
+  minIntervalMs: number,
+): Promise<RespondResult | SkippedResult> {
+  const latestCreatedAt = await getLatestPostCreatedAt()
+
+  if (latestCreatedAt) {
+    const ageMs = Date.now() - new Date(latestCreatedAt).getTime()
+    if (ageMs < minIntervalMs) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'too_soon',
+        retryAfterMs: minIntervalMs - ageMs,
+      }
+    }
+  }
+
+  return generateNextPost()
+}
+
 export async function generateNextPost(): Promise<RespondResult> {
   const supabase = createServiceClient()
 

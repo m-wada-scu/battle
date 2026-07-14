@@ -77,6 +77,11 @@ a:visited {
   color: #444;
 }
 
+.toolbar-watching {
+  color: #008000;
+  font-weight: bold;
+}
+
 .trigger-button {
   margin-left: auto;
   font-size: 11px;

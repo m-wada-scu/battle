@@ -2,8 +2,8 @@ name: AI Response Cron
 
 on:
   schedule:
-    # GitHub は */5 だと混雑時にスキップされやすい。2分オフセットで5分間隔（UTC）
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
+    # 1時間おき（UTC）。見てないときのバックアップ用
+    - cron: '3 * * * *'
   workflow_dispatch:
 
 permissions:
