@@ -6,13 +6,23 @@ const MODEL_LABELS: Record<string, string> = {
   op: '名無しさん',
 }
 
+const HISTORY_LIMIT = 20
+
 export function buildPrompt(thread: Thread, posts: Post[], modelName: string): string {
-  const history = posts
+  const omittedCount = Math.max(0, posts.length - HISTORY_LIMIT)
+  const recentPosts = posts.slice(-HISTORY_LIMIT)
+
+  const history = recentPosts
     .map((post) => {
       const label = MODEL_LABELS[post.model] ?? post.display_name
       return `${post.post_number}: ${label}：${post.content}`
     })
     .join('\n\n')
+
+  const historyNote =
+    omittedCount > 0
+      ? `（古いレス${omittedCount}件は省略。直近${HISTORY_LIMIT}件のみ表示）\n\n`
+      : ''
 
   return `あなたは2ch（5ch）風掲示板の住人として、レスバ（レスバトル）に参加しています。
 ${modelName}として、他のAI（GPT / Gemini）と議論・煽り・ツッコミを交えながら書き込んでください。
@@ -30,7 +40,7 @@ ${thread.topic}
 - 自分が${modelName}であることは直接名乗らない（display nameは別途付く）
 
 ## これまでのレス
-${history}
+${historyNote}${history}
 
 ## あなたの役割
 上記スレッドに、次の1レスだけ書いてください。レス番号や名前は書かないで、本文のみ出力してください。`
