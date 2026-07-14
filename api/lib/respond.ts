@@ -50,23 +50,27 @@ export async function generateNextPost(): Promise<RespondResult> {
     throw new Error('No active thread found. Run supabase/migrations/001_init.sql first.')
   }
 
+  const activeThread = thread as Thread
+
   const { data: posts, error: postsError } = await supabase
     .from('posts')
     .select('*')
-    .eq('thread_id', thread.id)
+    .eq('thread_id', activeThread.id)
     .order('post_number', { ascending: true })
 
   if (postsError) {
     throw new Error(`Failed to fetch posts: ${postsError.message}`)
   }
 
-  const model = normalizeModel(thread.next_model)
-  const content = await generateContent(model, thread, posts ?? [])
-  const postNumber = (posts?.at(-1)?.post_number ?? 0) + 1
+  const postList = (posts ?? []) as Post[]
+  const model = normalizeModel(activeThread.next_model)
+  const content = await generateContent(model, activeThread, postList)
+  const lastPost = postList[postList.length - 1]
+  const postNumber = (lastPost?.post_number ?? 0) + 1
   const displayName = modelDisplayName(model)
 
   const { error: insertError } = await supabase.from('posts').insert({
-    thread_id: thread.id,
+    thread_id: activeThread.id,
     post_number: postNumber,
     model,
     display_name: displayName,
@@ -83,14 +87,14 @@ export async function generateNextPost(): Promise<RespondResult> {
       next_model: nextModel(model),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', thread.id)
+    .eq('id', activeThread.id)
 
   if (updateError) {
     throw new Error(`Failed to update thread: ${updateError.message}`)
   }
 
   return {
-    threadId: thread.id,
+    threadId: activeThread.id,
     postNumber,
     model,
     displayName,

@@ -1,31 +1,6 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Post, Thread } from './types.js'
+import { createClient } from '@supabase/supabase-js'
 
-export type Database = {
-  public: {
-    Tables: {
-      threads: {
-        Row: Thread
-        Insert: Omit<Thread, 'id' | 'created_at' | 'updated_at'> & {
-          id?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: Partial<Thread>
-      }
-      posts: {
-        Row: Post
-        Insert: Omit<Post, 'id' | 'created_at'> & {
-          id?: string
-          created_at?: string
-        }
-        Update: Partial<Post>
-      }
-    }
-  }
-}
-
-export function createServiceClient(): SupabaseClient<Database> {
+export function createServiceClient() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -33,12 +8,12 @@ export function createServiceClient(): SupabaseClient<Database> {
     throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required')
   }
 
-  return createClient<Database>(url, key, {
+  return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
 
-export function createAnonClient(): SupabaseClient<Database> {
+export function createAnonClient() {
   const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL
   const key = process.env.VITE_SUPABASE_ANON_KEY
 
@@ -46,7 +21,7 @@ export function createAnonClient(): SupabaseClient<Database> {
     throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required')
   }
 
-  return createClient<Database>(url, key, {
+  return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
