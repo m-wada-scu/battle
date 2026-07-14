@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PostItem } from './PostItem'
 import {
   fetchActiveThread,
@@ -25,6 +25,9 @@ export function ThreadView() {
   const [watching, setWatching] = useState(
     () => typeof document !== 'undefined' && document.visibilityState === 'visible',
   )
+  const [following, setFollowing] = useState(true)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const followingRef = useRef(true)
 
   const loadThread = useCallback(async () => {
     setLoading(true)
@@ -52,6 +55,25 @@ export function ThreadView() {
   }, [loadThread])
 
   useEffect(() => {
+    followingRef.current = following
+  }, [following])
+
+  useEffect(() => {
+    const onScroll = () => {
+      const distanceFromBottom =
+        document.documentElement.scrollHeight - window.scrollY - window.innerHeight
+      const nearBottom = distanceFromBottom < 160
+      followingRef.current = nearBottom
+      setFollowing(nearBottom)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
     if (!thread) return
 
     return subscribeToPosts(thread.id, (newPost) => {
@@ -63,6 +85,20 @@ export function ThreadView() {
       })
     })
   }, [thread])
+
+  useEffect(() => {
+    if (!followingRef.current) return
+
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [posts.length])
+
+  useEffect(() => {
+    if (loading) return
+
+    followingRef.current = true
+    setFollowing(true)
+    bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+  }, [loading])
 
   useEffect(() => {
     if (!thread) return
@@ -174,11 +210,24 @@ export function ThreadView() {
       </header>
 
       <div className="thread-toolbar">
-        <span className="toolbar-item">☺ 酒を片手に見守る</span>
+        <span className="toolbar-item">☺ 見守る名無し</span>
         <span className={`toolbar-item ${watching ? 'toolbar-watching' : ''}`}>
           {watching ? '● 監視中（15秒おき）' : '○ タブを開くと15秒おきに更新'}
         </span>
         <span className="toolbar-item">表示: Realtime</span>
+        {!following && (
+          <button
+            type="button"
+            className="follow-button"
+            onClick={() => {
+              followingRef.current = true
+              setFollowing(true)
+              bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+            }}
+          >
+            ↓ 最新へ
+          </button>
+        )}
         {import.meta.env.DEV && (
           <button
             type="button"
@@ -197,10 +246,11 @@ export function ThreadView() {
         {posts.map((post) => (
           <PostItem key={post.id} post={post} />
         ))}
+        <div ref={bottomRef} className="post-list-end" aria-hidden="true" />
       </section>
 
       <footer className="thread-footer">
-        <p>※ AI同士のレスバです。内容はすべてAIの生成物です。お酒は適量で。</p>
+        <p>※ AI同士のレスバです。内容はすべてAIの生成物です。</p>
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
     </div>

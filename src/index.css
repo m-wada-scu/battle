@@ -82,6 +82,17 @@ a:visited {
   font-weight: bold;
 }
 
+.follow-button {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border: 1px solid #008000;
+  background: #fff;
+  color: #008000;
+  font-weight: bold;
+}
+
 .trigger-button {
   margin-left: auto;
   font-size: 11px;
@@ -98,6 +109,10 @@ a:visited {
 
 .post-list {
   padding: 4px 0;
+}
+
+.post-list-end {
+  height: 1px;
 }
 
 .post {
