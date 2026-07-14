@@ -1,11 +1,5 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "crons": [
-    {
-      "path": "/api/cron/respond",
-      "schedule": "*/3 * * * *"
-    }
-  ]
+  "framework": "vite"
 }

@@ -1,0 +1,16 @@
+name: AI Response Cron
+
+on:
+  schedule:
+    # GitHub Actions の最短間隔は5分（UTC）
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger next AI post
+        run: |
+          curl -sf -X POST "${{ secrets.APP_URL }}/api/trigger" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
