@@ -8,7 +8,7 @@ import {
   normalizeModel,
   type Post,
   type Thread,
-} from './types'
+} from '../../lib/types'
 
 async function generateContent(
   model: AiModel,

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Post, Thread } from './types'
+import type { Post, Thread } from '../../lib/types'
 
 export type Database = {
   public: {

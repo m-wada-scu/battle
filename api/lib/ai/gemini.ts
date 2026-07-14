@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai'
 import { buildPrompt } from '../prompts'
-import type { Post, Thread } from '../types'
+import type { Post, Thread } from '../../../lib/types'
 
 export async function generateGeminiResponse(
   thread: Thread,
