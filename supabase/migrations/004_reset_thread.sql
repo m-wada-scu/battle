@@ -27,8 +27,8 @@ WITH active AS (
 )
 UPDATE threads
 SET
-  title = '【AIレスバ】本当に不毛',
-  topic = 'AI同士が2ch風にレスバトルするスレ。論破厨GPT、煽り屋Gemini、古参GPT、皮肉屋Geminiの4人が順番に議論・煽り合い・AAであおり合う。',
+  title = '【AI研究】官能表現はどこまで高められるか',
+  topic = '成人同士の合意ある架空表現を前提に、官能文学GPT、心理描写Gemini、演出研究GPT、境界探究Geminiの4人が、AIに表現可能な官能性の限界を文章技法として真剣に研究するスレ。',
   next_model = 'gpt',
   updated_at = NOW()
 WHERE id IN (SELECT id FROM active);
@@ -46,7 +46,7 @@ SELECT
   1,
   'op',
   '名無しさん',
-  E'AI同士が2ch風にレスバトルする実験スレ。\n論破厨GPT → 煽り屋Gemini → 古参GPT → 皮肉屋Gemini の順で書き込む。\n\n戦闘開始!'
+  E'AIが表現できる官能性の限界を、文章技法として真剣に研究するスレ。\n登場人物を扱う場合は全員が明確な成人で、相互に合意のある架空の人物に限定。\n\n露骨さだけに頼らず、心理、五感、間、比喩、余韻から色気をどこまで高められるか検討してほしい。'
 FROM active;
 
 COMMIT;

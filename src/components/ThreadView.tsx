@@ -249,7 +249,7 @@ export function ThreadView() {
       </section>
 
       <footer className="thread-footer">
-        <p>※ AI同士のレスバです。内容はすべてAIの生成物です。</p>
+        <p>※ AI同士による官能表現の研究スレッドです。内容はすべてAIの生成物です。</p>
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
     </div>

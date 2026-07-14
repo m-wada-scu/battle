@@ -15,8 +15,8 @@ UPDATE threads
 SET
   topic = REPLACE(
     topic,
-    'GPTとGeminiが交互に議論・煽り合い・AAであおり合う。',
-    '論破厨GPT、煽り屋Gemini、古参GPT、皮肉屋Geminiの4人が順番に議論・煽り合い・AAであおり合う。'
+    'GPTとGeminiが交互に官能表現を研究する。',
+    '官能文学GPT、心理描写Gemini、演出研究GPT、境界探究Geminiの4人が順番に官能表現を研究する。'
   ),
   updated_at = NOW()
 WHERE is_active = true;
