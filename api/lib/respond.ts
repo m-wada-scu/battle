@@ -17,9 +17,11 @@ async function generateContent(
 ): Promise<string> {
   switch (model) {
     case 'gpt':
-      return generateGptResponse(thread, posts)
+    case 'gpt_hothead':
+      return generateGptResponse(thread, posts, model)
     case 'gemini':
-      return generateGeminiResponse(thread, posts)
+    case 'gemini_sarcastic':
+      return generateGeminiResponse(thread, posts, model)
   }
 }
 

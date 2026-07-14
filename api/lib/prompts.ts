@@ -1,8 +1,9 @@
-import type { Post, Thread } from './types.js'
+import { PERSONAS, type AiModel, type Post, type Thread } from './types.js'
 
 const MODEL_LABELS: Record<string, string> = {
-  gpt: 'GPT',
-  gemini: 'Gemini',
+  ...Object.fromEntries(
+    Object.entries(PERSONAS).map(([model, persona]) => [model, persona.label]),
+  ),
   op: '名無しさん',
 }
 
@@ -32,9 +33,10 @@ function buildAaGuidance(recentPosts: Post[]): string {
   return `- 今回AAを使ってもよいが **必須ではない**（8〜10レスに1回程度が目安）`
 }
 
-export function buildPrompt(thread: Thread, posts: Post[], modelName: string): string {
+export function buildPrompt(thread: Thread, posts: Post[], model: AiModel): string {
   const omittedCount = Math.max(0, posts.length - HISTORY_LIMIT)
   const recentPosts = posts.slice(-HISTORY_LIMIT)
+  const persona = PERSONAS[model]
 
   const history = recentPosts
     .map((post) => {
@@ -51,7 +53,13 @@ export function buildPrompt(thread: Thread, posts: Post[], modelName: string): s
   const aaGuidance = buildAaGuidance(recentPosts)
 
   return `あなたは2ch（5ch）風掲示板の住人として、レスバ（レスバトル）に参加しています。
-${modelName}として、他のAI（GPT / Gemini）と議論・煽り・ツッコミを交えながら書き込んでください。
+4人の固定キャラクターが参加するレスバで、あなたは「${persona.label}」を担当します。
+同じAIプロバイダーを使う別キャラクターとは明確に人格を分けてください。
+
+## あなたの固定ペルソナ
+${persona.description}
+- この性格・話し方を毎レス一貫して守る
+- 他の3人の口調をまねせず、自分の立場から反応する
 
 ## スレッドのテーマ
 ${thread.topic}
@@ -67,7 +75,7 @@ ${thread.topic}
 - 文章を完璧に整理しすぎず、短文・改行・畳みかけで感情の勢いを出す
 - ただし毎回「顔真っ赤」「効いてる」をそのまま連呼せず、表現と反応パターンを変える
 - マークダウン記法（**太字**、#見出し等）は使わない
-- 自分が${modelName}であることは直接名乗らない（display nameは別途付く）
+- 自分の名前やペルソナ名は本文中で直接名乗らない（display nameは別途付く）
 
 ## レスバの温度感
 - 基本テンションは「平静を装っているが明らかにムキになっている」

@@ -7,12 +7,11 @@ import {
   type Post,
   type Thread,
 } from '../lib/supabase'
-import { MODEL_ORDER } from '../../api/lib/types'
+import { MODEL_ORDER, PERSONAS } from '../../api/lib/types'
 
-const MODEL_LABEL: Record<string, string> = {
-  gpt: 'GPT',
-  gemini: 'Gemini',
-}
+const MODEL_LABEL: Record<string, string> = Object.fromEntries(
+  Object.entries(PERSONAS).map(([model, persona]) => [model, persona.label]),
+)
 
 const WATCH_INTERVAL_MS = 15_000
 

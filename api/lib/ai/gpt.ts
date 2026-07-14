@@ -1,10 +1,11 @@
 import OpenAI from 'openai'
 import { buildPrompt } from '../prompts.js'
-import type { Post, Thread } from '../types.js'
+import type { AiModel, Post, Thread } from '../types.js'
 
 export async function generateGptResponse(
   thread: Thread,
   posts: Post[],
+  persona: AiModel,
 ): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -12,7 +13,7 @@ export async function generateGptResponse(
   }
 
   const client = new OpenAI({ apiKey })
-  const prompt = buildPrompt(thread, posts, 'GPT')
+  const prompt = buildPrompt(thread, posts, persona)
 
   const completion = await client.chat.completions.create({
     model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
