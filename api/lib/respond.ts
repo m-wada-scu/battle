@@ -1,6 +1,6 @@
-import { generateGeminiResponse } from './ai/gemini'
-import { generateGptResponse } from './ai/gpt'
-import { createServiceClient } from './supabase'
+import { generateGeminiResponse } from './ai/gemini.js'
+import { generateGptResponse } from './ai/gpt.js'
+import { createServiceClient } from './supabase.js'
 import {
   type AiModel,
   modelDisplayName,
@@ -8,7 +8,7 @@ import {
   normalizeModel,
   type Post,
   type Thread,
-} from './types'
+} from './types.js'
 
 async function generateContent(
   model: AiModel,

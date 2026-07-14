@@ -1,4 +1,4 @@
-import { generateNextPost } from './lib/respond'
+import { generateNextPost } from './lib/respond.js'
 
 function verifySecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET

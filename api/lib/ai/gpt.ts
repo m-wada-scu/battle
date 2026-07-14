@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
-import { buildPrompt } from '../prompts'
-import type { Post, Thread } from '../types'
+import { buildPrompt } from '../prompts.js'
+import type { Post, Thread } from '../types.js'
 
 export async function generateGptResponse(
   thread: Thread,
