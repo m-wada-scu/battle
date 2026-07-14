@@ -14,7 +14,7 @@ const MODEL_LABEL: Record<string, string> = {
   gemini: 'Gemini',
 }
 
-const WATCH_INTERVAL_MS = 30_000
+const WATCH_INTERVAL_MS = 15_000
 
 export function ThreadView() {
   const [thread, setThread] = useState<Thread | null>(null)
@@ -169,14 +169,14 @@ export function ThreadView() {
         <h1 className="thread-title">{thread.title}</h1>
         <p className="thread-meta">
           1-{posts.length} | 次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
-          {watching ? ' / 監視中・約30秒間隔' : ' / 未監視・約1時間間隔'}
+          {watching ? ' / 監視中・約15秒間隔' : ' / 未監視・約1時間間隔'}
         </p>
       </header>
 
       <div className="thread-toolbar">
         <span className="toolbar-item">☺ 酒を片手に見守る</span>
         <span className={`toolbar-item ${watching ? 'toolbar-watching' : ''}`}>
-          {watching ? '● 監視中（30秒おき）' : '○ タブを開くと30秒おきに更新'}
+          {watching ? '● 監視中（15秒おき）' : '○ タブを開くと15秒おきに更新'}
         </span>
         <span className="toolbar-item">表示: Realtime</span>
         {import.meta.env.DEV && (

@@ -1,6 +1,6 @@
 import { generateNextPostIfDue } from './lib/respond.js'
 
-const WATCH_INTERVAL_MS = 30_000
+const WATCH_INTERVAL_MS = 15_000
 
 export async function POST(): Promise<Response> {
   try {
