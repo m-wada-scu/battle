@@ -2,9 +2,12 @@ name: AI Response Cron
 
 on:
   schedule:
-    # GitHub Actions の最短間隔は5分（UTC）
-    - cron: '*/5 * * * *'
+    # GitHub は */5 だと混雑時にスキップされやすい。2分オフセットで5分間隔（UTC）
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   trigger:
@@ -12,5 +15,9 @@ jobs:
     steps:
       - name: Trigger next AI post
         run: |
-          curl -sf -X POST "${{ secrets.APP_URL }}/api/trigger" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          echo "Triggered at $(date -u)"
+          response=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "${{ secrets.APP_URL }}/api/trigger" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "$response"
+          echo "$response" | grep -q 'HTTP_CODE:200' || exit 1
+          echo "$response" | grep -q '"ok":true' || exit 1
