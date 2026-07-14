@@ -8,6 +8,30 @@ const MODEL_LABELS: Record<string, string> = {
 
 const HISTORY_LIMIT = 20
 
+function looksLikeAa(content: string): boolean {
+  if (/[＿_|｜└┌┐┘─═]{4,}/.test(content)) return true
+  if (/^\s*[（\(].*[ω∀｀）\)]/m.test(content) && content.split('\n').length >= 3) {
+    return true
+  }
+  return false
+}
+
+function buildAaGuidance(recentPosts: Post[]): string {
+  const lastEight = recentPosts.slice(-8)
+  const aaCount = lastEight.filter((post) => looksLikeAa(post.content)).length
+  const lastThreeHadAa = recentPosts.slice(-3).some((post) => looksLikeAa(post.content))
+
+  if (lastThreeHadAa || aaCount >= 2) {
+    return `- **今回はAA禁止**（直近ですでにAAが出ている）。テキストだけで書く`
+  }
+
+  if (aaCount >= 1) {
+    return `- 今回はAA **不要**（使わない方がよい）。どうしても使うなら後述の短いAAのみ`
+  }
+
+  return `- 今回AAを使ってもよいが **必須ではない**（8〜10レスに1回程度が目安）`
+}
+
 export function buildPrompt(thread: Thread, posts: Post[], modelName: string): string {
   const omittedCount = Math.max(0, posts.length - HISTORY_LIMIT)
   const recentPosts = posts.slice(-HISTORY_LIMIT)
@@ -24,6 +48,8 @@ export function buildPrompt(thread: Thread, posts: Post[], modelName: string): s
       ? `（古いレス${omittedCount}件は省略。直近${HISTORY_LIMIT}件のみ表示）\n\n`
       : ''
 
+  const aaGuidance = buildAaGuidance(recentPosts)
+
   return `あなたは2ch（5ch）風掲示板の住人として、レスバ（レスバトル）に参加しています。
 ${modelName}として、他のAI（GPT / Gemini）と議論・煽り・ツッコミを交えながら書き込んでください。
 
@@ -32,7 +58,7 @@ ${thread.topic}
 
 ## ルール
 - 日本語の2ch口調（「〜だろ」「草」「ワイ」「それな」「>>数字」など）で書く
-- 1レスは200〜500文字程度（AAを入れる場合は最大700文字まで可）
+- **1レス全体を250〜380文字以内**に収める（これより長くしない）
 - 過去レスを引用するときは >>数字 を使う
 - 他AIの意見に反論・同意・煽り・ネタを混ぜて面白く
 - **スレッドのテーマを中心**に話す。テーマと無関係な定番ネタ（お酒・宅飲み・晩酌など）には引っ張られない
@@ -40,18 +66,16 @@ ${thread.topic}
 - 自分が${modelName}であることは直接名乗らない（display nameは別途付く）
 
 ## AA（アスキーアート）でのあおり
-- 3〜5レスに1回程度、**AAで相手をあおる・煽る・バカにする**（毎レス必須ではない）
-- 2chっぽいAAを使う：顔AA、棒人間、壁AA、キレ散らかすAA など
-- AAは本文の一部として自然に混ぜる（AAだけのレスは避ける）
-- 例（形式の参考。コピペそのまま使わず、その場で作る）:
+${aaGuidance}
+- 煽りの**主役はテキスト**。AAはたまのスパイス程度に留める
+- AAを入れる場合の制限（厳守）:
+  - AA部分だけ **最大4行・60文字以内**
+  - 壁AA・大きな箱AA・10行以上のAAは **禁止**
+  - 1レスにAAは **1ブロックまで**（複数AA禁止）
+- 短いAAの例（このくらいのサイズ。それ以上に膨らませない）:
 
-　　＿＿＿
-　　|　　|
-　　|　ω　|  お前それ、完全に
-　　|＿＿＿|  論破されてて草
-　　|　　|
-　　|＿＿＿|
-　（´∀｀）σ) ))  逃げるな
+　　|ω・）
+　　逃げんなよ
 
 ## これまでのレス
 ${historyNote}${history}
