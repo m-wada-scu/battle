@@ -7,7 +7,7 @@ import {
   type Post,
   type Thread,
 } from '../lib/supabase'
-import { MODEL_ORDER } from '../../lib/types'
+import { MODEL_ORDER } from '../../api/lib/types'
 
 const MODEL_LABEL: Record<string, string> = {
   gpt: 'GPT',

@@ -1,4 +1,4 @@
-import type { Post, Thread } from '../../lib/types'
+import type { Post, Thread } from './types'
 
 const MODEL_LABELS: Record<string, string> = {
   gpt: 'GPT',
