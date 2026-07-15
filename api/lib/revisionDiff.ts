@@ -25,23 +25,6 @@ export function getRevisionSectionLabel(content: string): RevisionSectionLabel |
   return null
 }
 
-export function findPreviousRevisionBody(
-  posts: Array<{ content: string; post_number: number }>,
-  index: number,
-): string | null {
-  for (let i = index - 1; i >= 0; i -= 1) {
-    const revisionBody = extractRevisionBody(posts[i].content)
-    if (revisionBody) return revisionBody
-
-    if (posts[i].post_number === 1) {
-      const initialDraft = extractInitialDraft(posts[i].content)
-      if (initialDraft) return initialDraft
-    }
-  }
-
-  return null
-}
-
 function segmentText(text: string): string[] {
   if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
     const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' })
@@ -141,4 +124,60 @@ export function splitRevisionContent(content: string): {
   const prefix = content.slice(0, labelIndex + label.length)
 
   return { prefix, body, label }
+}
+
+function linkifyContent(content: string): string {
+  return content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
+    .replace(/(&gt;&gt;\d+)/g, '<span class="anchor">$1</span>')
+}
+
+export function buildPostBodyHtml(
+  content: string,
+  previousRevisionBody: string | null,
+): { bodyHtml: string; hasRevisionDiff: boolean } {
+  const revisionParts = splitRevisionContent(content)
+  if (!revisionParts) {
+    return {
+      bodyHtml: linkifyContent(content),
+      hasRevisionDiff: false,
+    }
+  }
+
+  const hasRevisionDiff = previousRevisionBody !== null
+  const prefixHtml = linkifyContent(revisionParts.prefix)
+  const bodyHtml = previousRevisionBody
+    ? highlightRevisionDiff(previousRevisionBody, revisionParts.body)
+    : linkifyContent(revisionParts.body)
+
+  return {
+    bodyHtml: `${prefixHtml}\n${bodyHtml}`,
+    hasRevisionDiff,
+  }
+}
+
+export function getLastRevisionBodyFromPosts(
+  posts: Array<{ content: string; post_number: number }>,
+): string | null {
+  let lastRevisionBody: string | null = null
+
+  for (const post of posts) {
+    const revisionBody = extractRevisionBody(post.content)
+    if (revisionBody) {
+      lastRevisionBody = revisionBody
+      continue
+    }
+
+    if (post.post_number === 1) {
+      const initialDraft = extractInitialDraft(post.content)
+      if (initialDraft) {
+        lastRevisionBody = initialDraft
+      }
+    }
+  }
+
+  return lastRevisionBody
 }

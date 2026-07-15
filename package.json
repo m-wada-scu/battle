@@ -15,11 +15,14 @@
     "db:stop": "npx supabase stop",
     "db:reset": "npx supabase db reset",
     "seed:complete": "npx supabase db query --local --file scripts/seed-complete-thread.sql",
-    "seed:reset": "npx supabase db query --local --file scripts/reset-active-thread.sql"
+    "seed:reset": "npx supabase db query --local --file scripts/reset-active-thread.sql",
+    "backfill:body-html": "tsx scripts/backfill-body-html.ts",
+    "backfill:body-html:production": "tsx scripts/backfill-body-html.ts --production"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",
     "@supabase/supabase-js": "^2.110.4",
+    "@tanstack/react-virtual": "^3.14.6",
     "lucide-react": "^1.24.0",
     "openai": "^6.46.0",
     "react": "^19.2.7",

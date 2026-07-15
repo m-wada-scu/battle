@@ -1,4 +1,5 @@
 import { createServiceClient } from './lib/supabase.js'
+import { buildPostBodyHtml } from './lib/revisionDiff.js'
 import type { Thread } from './lib/types.js'
 
 const MAX_TOPIC_LENGTH = 100
@@ -48,5 +49,28 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  return Response.json({ ok: true, thread: data as Thread }, { status: 201 })
+  const thread = data as Thread
+  const { data: opPost, error: opPostError } = await supabase
+    .from('posts')
+    .select('id, content')
+    .eq('thread_id', thread.id)
+    .eq('post_number', 1)
+    .single()
+
+  if (!opPostError && opPost) {
+    const { bodyHtml, hasRevisionDiff } = buildPostBodyHtml(opPost.content, null)
+    const { error: updateError } = await supabase
+      .from('posts')
+      .update({
+        body_html: bodyHtml,
+        has_revision_diff: hasRevisionDiff,
+      })
+      .eq('id', opPost.id)
+
+    if (updateError) {
+      console.error('[threads] Failed to store OP body_html:', updateError.message)
+    }
+  }
+
+  return Response.json({ ok: true, thread }, { status: 201 })
 }

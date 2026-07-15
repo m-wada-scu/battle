@@ -54,6 +54,8 @@ export interface Post {
   model: PostModel
   display_name: string
   content: string
+  body_html: string | null
+  has_revision_diff: boolean
   created_at: string
 }
 

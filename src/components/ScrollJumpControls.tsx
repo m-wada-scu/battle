@@ -1,11 +1,14 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface ScrollJumpControlsProps {
-  topRef: RefObject<HTMLElement | null>
-  bottomRef: RefObject<HTMLElement | null>
+  onScrollToTop: () => void
+  onScrollToBottom: () => void
 }
 
-export function ScrollJumpControls({ topRef, bottomRef }: ScrollJumpControlsProps) {
+export function ScrollJumpControls({
+  onScrollToTop,
+  onScrollToBottom,
+}: ScrollJumpControlsProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const idleTimerRef = useRef<number | undefined>(undefined)
 
@@ -29,21 +32,13 @@ export function ScrollJumpControls({ topRef, bottomRef }: ScrollJumpControlsProp
     }
   }, [])
 
-  const scrollToTop = () => {
-    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }
-
   return (
     <div ref={containerRef} className="scroll-jump scroll-jump--idle" aria-label="ページ移動">
       <button
         type="button"
         className="scroll-jump-button"
         aria-label="最上部へ移動"
-        onClick={scrollToTop}
+        onClick={onScrollToTop}
       >
         ▲
       </button>
@@ -51,7 +46,7 @@ export function ScrollJumpControls({ topRef, bottomRef }: ScrollJumpControlsProp
         type="button"
         className="scroll-jump-button"
         aria-label="最下部へ移動"
-        onClick={scrollToBottom}
+        onClick={onScrollToBottom}
       >
         ▼
       </button>

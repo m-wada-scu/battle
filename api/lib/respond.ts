@@ -1,5 +1,6 @@
 import { generateGeminiResponse } from './ai/gemini.js'
 import { generateGptResponse } from './ai/gpt.js'
+import { buildPostDisplayFields } from './postDisplay.js'
 import { createServiceClient } from './supabase.js'
 import {
   type AiModel,
@@ -157,6 +158,7 @@ async function generateNextPostWithInterval(
     const model = normalizeModel(activeThread.next_model)
     const content = await generateContent(model, activeThread, postList)
     const displayName = modelDisplayName(model)
+    const { bodyHtml, hasRevisionDiff } = buildPostDisplayFields(postList, content)
 
     const { data: postNumber, error: finishError } = await supabase.rpc(
       'finish_post_generation',
@@ -166,6 +168,8 @@ async function generateNextPostWithInterval(
         input_model: model,
         input_display_name: displayName,
         input_content: content,
+        input_body_html: bodyHtml,
+        input_has_revision_diff: hasRevisionDiff,
       },
     )
 

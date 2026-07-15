@@ -22,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "api/lib/types.ts"]
+  "include": ["src", "api/lib/types.ts", "api/lib/revisionDiff.ts", "api/lib/postDisplay.ts"]
 }

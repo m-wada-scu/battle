@@ -157,6 +157,22 @@ a:visited {
   padding: 4px 0;
 }
 
+.post-list-loading {
+  margin: 0;
+  padding: 12px;
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+}
+
+.post-list-virtual-spacer {
+  width: 100%;
+}
+
+.post-list-virtual-item {
+  box-sizing: border-box;
+}
+
 .post-list-end {
   height: 1px;
 }
@@ -193,9 +209,6 @@ a:visited {
 .post {
   padding: 6px 12px;
   border-bottom: 1px dotted #ccc;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
-  contain: layout style paint;
 }
 
 .post-op {

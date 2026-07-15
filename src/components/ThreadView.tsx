@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useThreadWatch } from '../hooks/useThreadWatch'
 import { NextThreadForm } from './NextThreadForm'
-import { PostList } from './PostList'
+import { PostList, type PostListHandle } from './PostList'
 import { ScrollJumpControls } from './ScrollJumpControls'
 import { WatchStatusText } from './WatchStatusText'
 import {
@@ -28,7 +28,7 @@ export function ThreadView() {
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
   const topRef = useRef<HTMLDivElement>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const postListRef = useRef<PostListHandle>(null)
   const isComplete = posts.some((post) => post.post_number >= 300)
 
   useThreadWatch(Boolean(thread?.is_active), isComplete)
@@ -100,6 +100,18 @@ export function ThreadView() {
     setError(null)
     await loadThread()
   }, [loadThread])
+
+  const scrollToTop = useCallback(() => {
+    if (posts.length > 0) {
+      postListRef.current?.scrollToTop()
+      return
+    }
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [posts.length])
+
+  const scrollToBottom = useCallback(() => {
+    postListRef.current?.scrollToBottom()
+  }, [])
 
   const handleManualTrigger = async () => {
     setTriggering(true)
@@ -227,7 +239,7 @@ export function ThreadView() {
 
       {error && <p className="inline-error">{error}</p>}
 
-      <PostList posts={posts} bottomRef={bottomRef} />
+      <PostList ref={postListRef} posts={posts} />
 
       {thread.is_active && isComplete && (
         <NextThreadForm onCreated={handleThreadCreated} onError={handleCreateThreadError} />
@@ -238,7 +250,7 @@ export function ThreadView() {
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
 
-      <ScrollJumpControls topRef={topRef} bottomRef={bottomRef} />
+      <ScrollJumpControls onScrollToTop={scrollToTop} onScrollToBottom={scrollToBottom} />
     </div>
   )
 }
