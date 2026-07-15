@@ -4,7 +4,6 @@ import { createServiceClient } from './supabase.js'
 import {
   type AiModel,
   modelDisplayName,
-  nextModel,
   normalizeModel,
   type Post,
   type Thread,
@@ -42,50 +41,97 @@ export interface SkippedResult {
   retryAfterMs?: number
 }
 
-interface LatestPostState {
-  created_at: string
-  post_number: number
+interface GenerationClaim {
+  claim_id: string | null
+  thread_id: string
+  reason: SkippedResult['reason'] | null
+  retry_after_ms: number | null
 }
 
-async function getLatestPostState(): Promise<LatestPostState | null> {
+async function releaseGenerationClaim(
+  threadId: string,
+  claimId: string,
+): Promise<void> {
   const supabase = createServiceClient()
-
-  const { data: thread, error: threadError } = await supabase
-    .from('threads')
-    .select('id')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (threadError) {
-    throw new Error(`Failed to fetch active thread: ${threadError.message}`)
-  }
-
-  if (!thread) return null
-
-  const { data, error } = await supabase
-    .from('posts')
-    .select('created_at, post_number')
-    .eq('thread_id', thread.id)
-    .order('post_number', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { error } = await supabase.rpc('release_post_generation', {
+    input_thread_id: threadId,
+    input_claim_id: claimId,
+  })
 
   if (error) {
-    throw new Error(`Failed to fetch latest post: ${error.message}`)
+    console.error('[respond] Failed to release generation claim:', error.message)
   }
-
-  return (data as LatestPostState | null) ?? null
 }
 
 export async function generateNextPostIfDue(
   minIntervalMs: number,
 ): Promise<RespondResult | SkippedResult> {
-  const latestPost = await getLatestPostState()
+  return generateNextPostWithInterval(minIntervalMs)
+}
 
-  if (latestPost) {
-    if (latestPost.post_number >= MAX_POST_NUMBER) {
+export async function generateNextPost(): Promise<RespondResult | SkippedResult> {
+  return generateNextPostWithInterval(0)
+}
+
+async function generateNextPostWithInterval(
+  minIntervalMs: number,
+): Promise<RespondResult | SkippedResult> {
+  const supabase = createServiceClient()
+
+  const { data: claimData, error: claimError } = await supabase
+    .rpc('claim_post_generation', {
+      input_min_interval_ms: minIntervalMs,
+    })
+    .single()
+
+  if (claimError) {
+    throw new Error(`Failed to claim post generation: ${claimError.message}`)
+  }
+
+  const claim = claimData as GenerationClaim
+
+  if (!claim.claim_id) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: claim.reason ?? 'too_soon',
+      ...(claim.retry_after_ms === null
+        ? {}
+        : { retryAfterMs: claim.retry_after_ms }),
+    }
+  }
+
+  const claimId = claim.claim_id
+  const threadId = claim.thread_id
+
+  try {
+    const { data: thread, error: threadError } = await supabase
+      .from('threads')
+      .select('*')
+      .eq('id', threadId)
+      .single()
+
+    if (threadError) {
+      throw new Error(`Failed to fetch thread: ${threadError.message}`)
+    }
+
+    const activeThread = thread as Thread
+
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('thread_id', activeThread.id)
+      .order('post_number', { ascending: true })
+
+    if (postsError) {
+      throw new Error(`Failed to fetch posts: ${postsError.message}`)
+    }
+
+    const postList = (posts ?? []) as Post[]
+    const lastPost = postList[postList.length - 1]
+
+    if ((lastPost?.post_number ?? 0) >= MAX_POST_NUMBER) {
+      await releaseGenerationClaim(threadId, claimId)
       return {
         ok: true,
         skipped: true,
@@ -93,96 +139,34 @@ export async function generateNextPostIfDue(
       }
     }
 
-    const ageMs = Date.now() - new Date(latestPost.created_at).getTime()
-    if (ageMs < minIntervalMs) {
-      return {
-        ok: true,
-        skipped: true,
-        reason: 'too_soon',
-        retryAfterMs: minIntervalMs - ageMs,
-      }
+    const model = normalizeModel(activeThread.next_model)
+    const content = await generateContent(model, activeThread, postList)
+    const displayName = modelDisplayName(model)
+
+    const { data: postNumber, error: finishError } = await supabase.rpc(
+      'finish_post_generation',
+      {
+        input_thread_id: threadId,
+        input_claim_id: claimId,
+        input_model: model,
+        input_display_name: displayName,
+        input_content: content,
+      },
+    )
+
+    if (finishError) {
+      throw new Error(`Failed to finish post generation: ${finishError.message}`)
     }
-  }
 
-  return generateNextPost()
-}
-
-export async function generateNextPost(): Promise<RespondResult | SkippedResult> {
-  const supabase = createServiceClient()
-
-  const { data: thread, error: threadError } = await supabase
-    .from('threads')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (threadError) {
-    throw new Error(`Failed to fetch thread: ${threadError.message}`)
-  }
-
-  if (!thread) {
-    throw new Error('No active thread found. Run supabase/migrations/001_init.sql first.')
-  }
-
-  const activeThread = thread as Thread
-
-  const { data: posts, error: postsError } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('thread_id', activeThread.id)
-    .order('post_number', { ascending: true })
-
-  if (postsError) {
-    throw new Error(`Failed to fetch posts: ${postsError.message}`)
-  }
-
-  const postList = (posts ?? []) as Post[]
-  const lastPost = postList[postList.length - 1]
-  const postNumber = (lastPost?.post_number ?? 0) + 1
-
-  if (postNumber > MAX_POST_NUMBER) {
     return {
-      ok: true,
-      skipped: true,
-      reason: 'thread_complete',
+      threadId,
+      postNumber: Number(postNumber),
+      model,
+      displayName,
+      content,
     }
-  }
-
-  const model = normalizeModel(activeThread.next_model)
-  const content = await generateContent(model, activeThread, postList)
-  const displayName = modelDisplayName(model)
-
-  const { error: insertError } = await supabase.from('posts').insert({
-    thread_id: activeThread.id,
-    post_number: postNumber,
-    model,
-    display_name: displayName,
-    content,
-  })
-
-  if (insertError) {
-    throw new Error(`Failed to insert post: ${insertError.message}`)
-  }
-
-  const { error: updateError } = await supabase
-    .from('threads')
-    .update({
-      next_model: nextModel(model),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', activeThread.id)
-
-  if (updateError) {
-    throw new Error(`Failed to update thread: ${updateError.message}`)
-  }
-
-  return {
-    threadId: activeThread.id,
-    postNumber,
-    model,
-    displayName,
-    content,
+  } catch (error) {
+    await releaseGenerationClaim(threadId, claimId)
+    throw error
   }
 }
