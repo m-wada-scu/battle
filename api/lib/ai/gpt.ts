@@ -19,7 +19,7 @@ export async function generateGptResponse(
     model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.95,
-    max_tokens: 1200,
+    max_completion_tokens: 1200,
   })
 
   const content = completion.choices[0]?.message?.content?.trim()
