@@ -50,9 +50,24 @@ interface LatestPostState {
 async function getLatestPostState(): Promise<LatestPostState | null> {
   const supabase = createServiceClient()
 
+  const { data: thread, error: threadError } = await supabase
+    .from('threads')
+    .select('id')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (threadError) {
+    throw new Error(`Failed to fetch active thread: ${threadError.message}`)
+  }
+
+  if (!thread) return null
+
   const { data, error } = await supabase
     .from('posts')
     .select('created_at, post_number')
+    .eq('thread_id', thread.id)
     .order('post_number', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -99,7 +114,7 @@ export async function generateNextPost(): Promise<RespondResult | SkippedResult>
     .from('threads')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 

@@ -6,7 +6,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
+      '/api/watch': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/api/trigger': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/api/threads': {
         target: 'http://localhost:3000',
         changeOrigin: true,
       },

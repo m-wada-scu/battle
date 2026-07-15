@@ -22,7 +22,7 @@ export async function fetchActiveThread(): Promise<Thread | null> {
     .from('threads')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
@@ -31,6 +31,20 @@ export async function fetchActiveThread(): Promise<Thread | null> {
   }
 
   return data
+}
+
+export async function fetchArchivedThreads(): Promise<Thread[]> {
+  const { data, error } = await supabase
+    .from('threads')
+    .select('*')
+    .eq('is_active', false)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data ?? []
 }
 
 export async function fetchPosts(threadId: string): Promise<Post[]> {

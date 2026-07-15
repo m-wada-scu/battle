@@ -37,6 +37,45 @@ a:visited {
   border: 1px solid #aaa;
 }
 
+.thread-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 6px 12px;
+  background: #ddd;
+  border-bottom: 1px solid #aaa;
+  font-size: 12px;
+}
+
+.history-label {
+  font-weight: bold;
+}
+
+.history-empty {
+  color: #666;
+}
+
+.history-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #0000ee;
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+}
+
+.history-current {
+  color: #551a8b;
+  font-weight: bold;
+}
+
+.active-thread-link {
+  margin-left: auto;
+  font-weight: bold;
+}
+
 .thread-header {
   background: #ccffcc;
   border-bottom: 1px solid #aaa;
@@ -113,6 +152,35 @@ a:visited {
 
 .post-list-end {
   height: 1px;
+}
+
+.next-thread-form {
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  background: #ffffee;
+  border-top: 1px solid #aaa;
+}
+
+.next-thread-form input {
+  min-width: 0;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #888;
+  font: inherit;
+}
+
+.next-thread-form button {
+  padding: 6px 14px;
+  border: 1px solid #888;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.next-thread-form button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .post {
