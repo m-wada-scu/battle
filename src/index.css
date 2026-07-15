@@ -192,8 +192,6 @@ a:visited {
 }
 
 .post {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
   padding: 6px 12px;
   border-bottom: 1px dotted #ccc;
 }

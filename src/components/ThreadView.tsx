@@ -105,16 +105,7 @@ export function ThreadView() {
   }, [])
 
   const scrollToBottom = useCallback(() => {
-    const anchor = bottomRef.current
-    if (!anchor) return
-
-    const snapToBottom = () => {
-      anchor.scrollIntoView({ block: 'end', behavior: 'instant' })
-    }
-
-    anchor.scrollIntoView({ block: 'end', behavior: 'smooth' })
-    window.addEventListener('scrollend', snapToBottom, { once: true })
-    window.setTimeout(snapToBottom, 700)
+    bottomRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [])
 
   const handleManualTrigger = async () => {

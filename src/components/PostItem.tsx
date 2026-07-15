@@ -1,23 +1,17 @@
 import { memo } from 'react'
 import type { PostDisplay } from '../lib/postDisplay'
 
-interface PostItemProps extends PostDisplay {
-  intrinsicSize?: number
-}
-
 export const PostItem = memo(function PostItem({
   postNumber,
   displayName,
   formattedDate,
   bodyHtml,
   hasRevisionDiff,
-  intrinsicSize,
-}: PostItemProps) {
+}: PostDisplay) {
   return (
     <article
       className={`post ${postNumber % 2 === 1 ? 'post-odd' : 'post-even'}`}
       id={`res${postNumber}`}
-      style={intrinsicSize ? { containIntrinsicSize: `auto ${intrinsicSize}px` } : undefined}
     >
       <div className="post-header">
         <span className="post-number">{postNumber}</span>
