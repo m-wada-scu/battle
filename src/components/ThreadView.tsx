@@ -32,20 +32,8 @@ export function ThreadView() {
   const topRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollIdleTimerRef = useRef<number | undefined>(undefined)
-  const [canJumpTop, setCanJumpTop] = useState(false)
-  const [canJumpBottom, setCanJumpBottom] = useState(false)
   const [jumpControlsIdle, setJumpControlsIdle] = useState(true)
   const isComplete = posts.some((post) => post.post_number >= 300)
-
-  const updateJumpControls = useCallback(() => {
-    const threshold = 96
-    const scrollY = window.scrollY
-    const viewportBottom = scrollY + window.innerHeight
-    const pageBottom = document.documentElement.scrollHeight
-
-    setCanJumpTop(scrollY > threshold)
-    setCanJumpBottom(viewportBottom < pageBottom - threshold)
-  }, [])
 
   useEffect(() => {
     const onScroll = () => {
@@ -54,23 +42,15 @@ export function ThreadView() {
       scrollIdleTimerRef.current = window.setTimeout(() => {
         setJumpControlsIdle(true)
       }, 700)
-      updateJumpControls()
     }
 
-    const onResize = () => {
-      updateJumpControls()
-    }
-
-    updateJumpControls()
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onResize)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
       window.clearTimeout(scrollIdleTimerRef.current)
     }
-  }, [posts.length, updateJumpControls])
+  }, [])
 
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -382,28 +362,23 @@ export function ThreadView() {
       <div
         className={`scroll-jump${jumpControlsIdle ? ' scroll-jump--idle' : ''}`}
         aria-label="ページ移動"
-        hidden={!canJumpTop && !canJumpBottom}
       >
-        {canJumpTop && (
-          <button
-            type="button"
-            className="scroll-jump-button"
-            aria-label="最上部へ移動"
-            onClick={scrollToTop}
-          >
-            ▲
-          </button>
-        )}
-        {canJumpBottom && (
-          <button
-            type="button"
-            className="scroll-jump-button"
-            aria-label="最下部へ移動"
-            onClick={scrollToBottom}
-          >
-            ▼
-          </button>
-        )}
+        <button
+          type="button"
+          className="scroll-jump-button"
+          aria-label="最上部へ移動"
+          onClick={scrollToTop}
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          className="scroll-jump-button"
+          aria-label="最下部へ移動"
+          onClick={scrollToBottom}
+        >
+          ▼
+        </button>
       </div>
     </div>
   )

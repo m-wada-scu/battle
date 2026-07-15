@@ -252,10 +252,6 @@ a:visited {
   transition: opacity 0.35s ease;
 }
 
-.scroll-jump[hidden] {
-  display: none;
-}
-
 .scroll-jump--idle,
 .scroll-jump:focus-within {
   opacity: 0.78;
@@ -263,8 +259,8 @@ a:visited {
 
 .scroll-jump-button {
   pointer-events: auto;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -274,7 +270,7 @@ a:visited {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: rgba(0, 0, 0, 0.62);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   border-radius: 0;
@@ -290,15 +286,15 @@ a:visited {
 }
 
 .scroll-jump-button:first-child {
-  border-radius: 18px 0 0 18px;
+  border-radius: 20px 0 0 20px;
 }
 
 .scroll-jump-button:last-child {
-  border-radius: 0 18px 18px 0;
+  border-radius: 0 20px 20px 0;
 }
 
 .scroll-jump-button:only-child {
-  border-radius: 18px;
+  border-radius: 20px;
 }
 
 .scroll-jump-button + .scroll-jump-button {
@@ -342,9 +338,9 @@ a:visited {
   }
 
   .scroll-jump-button {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
+    width: 46px;
+    height: 46px;
+    font-size: 17px;
     border-radius: 50%;
     border-left: 1px solid rgba(0, 0, 0, 0.1);
   }
