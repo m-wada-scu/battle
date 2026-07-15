@@ -87,7 +87,10 @@ export const PostList = memo(
       },
     })
 
-    virtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false
+    virtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, delta, instance) => {
+      if (delta === 0 || instance.scrollDirection === 'backward') return false
+      return item.start < (instance.scrollOffset ?? 0)
+    }
 
     useImperativeHandle(
       ref,
@@ -104,6 +107,8 @@ export const PostList = memo(
       [displays.length, virtualizer],
     )
 
+    const virtualItems = virtualizer.getVirtualItems()
+
     return (
       <section ref={listRef} className="post-list">
         {!isReady ? (
@@ -115,26 +120,25 @@ export const PostList = memo(
             className="post-list-virtual-spacer"
             style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}
           >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const display = displays[virtualItem.index]
-              return (
-                <div
-                  key={display.id}
-                  ref={virtualizer.measureElement}
-                  data-index={virtualItem.index}
-                  className="post-list-virtual-item"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualItem.start - scrollMargin}px)`,
-                  }}
-                >
-                  <PostItem {...display} />
-                </div>
-              )
-            })}
+            {virtualItems.length > 0 && (
+              <div
+                className="post-list-virtual-window"
+                style={{
+                  transform: `translateY(${virtualItems[0].start - scrollMargin}px)`,
+                }}
+              >
+                {virtualItems.map((virtualItem) => (
+                  <div
+                    key={virtualItem.key}
+                    ref={virtualizer.measureElement}
+                    data-index={virtualItem.index}
+                    className="post-list-virtual-item"
+                  >
+                    <PostItem {...displays[virtualItem.index]} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
