@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useThreadWatch } from '../hooks/useThreadWatch'
 import { NextThreadForm } from './NextThreadForm'
 import { PostList } from './PostList'
@@ -27,6 +27,7 @@ export function ThreadView() {
   const [switchingThread, setSwitchingThread] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const isComplete = posts.some((post) => post.post_number >= 300)
 
   useThreadWatch(Boolean(thread?.is_active), isComplete)
@@ -104,8 +105,16 @@ export function ThreadView() {
   }, [])
 
   const scrollToBottom = useCallback(() => {
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-    window.scrollTo({ top: Math.max(0, maxScroll), left: 0, behavior: 'smooth' })
+    const anchor = bottomRef.current
+    if (!anchor) return
+
+    const snapToBottom = () => {
+      anchor.scrollIntoView({ block: 'end', behavior: 'instant' })
+    }
+
+    anchor.scrollIntoView({ block: 'end', behavior: 'smooth' })
+    window.addEventListener('scrollend', snapToBottom, { once: true })
+    window.setTimeout(snapToBottom, 700)
   }, [])
 
   const handleManualTrigger = async () => {
@@ -243,6 +252,8 @@ export function ThreadView() {
         <p>※ AI同士による官能表現の研究スレッドです。内容はすべてAIの生成物です。</p>
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
+
+      <div ref={bottomRef} className="scroll-anchor scroll-anchor-bottom" aria-hidden="true" />
 
       <ScrollJumpControls onScrollToTop={scrollToTop} onScrollToBottom={scrollToBottom} />
     </div>

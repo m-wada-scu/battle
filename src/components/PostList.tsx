@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react'
 import { buildPostDisplays } from '../lib/postDisplay'
+import { estimatePostHeight, estimatePostsTotalHeight } from '../lib/postHeight'
 import type { Post } from '../lib/supabase'
 import { PostItem } from './PostItem'
 
@@ -7,17 +8,15 @@ interface PostListProps {
   posts: Post[]
 }
 
-function estimatePostHeight(bodyHtml: string): number {
-  const lineCount = bodyHtml.split('\n').length
-  const charEstimate = Math.ceil(bodyHtml.length / 42)
-  return Math.max(96, 56 + Math.max(lineCount, charEstimate) * 18)
-}
-
 export const PostList = memo(function PostList({ posts }: PostListProps) {
   const displays = useMemo(() => buildPostDisplays(posts), [posts])
+  const minHeight = useMemo(
+    () => estimatePostsTotalHeight(displays.map((display) => display.bodyHtml)),
+    [displays],
+  )
 
   return (
-    <section className="post-list">
+    <section className="post-list" style={{ minHeight: `${minHeight}px` }}>
       {displays.map((display) => (
         <PostItem
           key={display.id}
