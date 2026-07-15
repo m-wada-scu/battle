@@ -4,15 +4,15 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
+  useReducer,
   useRef,
-  useState,
 } from 'react'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
+import { measureElement as measureVirtualElement, useWindowVirtualizer } from '@tanstack/react-virtual'
 import { buildPostDisplays } from '../lib/postDisplay'
 import type { Post } from '../lib/supabase'
 import { PostItem } from './PostItem'
 
-const VIRTUAL_OVERSCAN = 10
+const VIRTUAL_OVERSCAN = 12
 const MIN_ESTIMATED_POST_HEIGHT = 96
 const MAX_ESTIMATED_POST_HEIGHT = 720
 
@@ -41,30 +41,53 @@ function estimatePostHeight(bodyHtml: string): number {
 export const PostList = memo(
   forwardRef<PostListHandle, PostListProps>(function PostList({ posts }, ref) {
     const listRef = useRef<HTMLElement>(null)
-    const [scrollMargin, setScrollMargin] = useState<number | null>(null)
-    const displays = useMemo(() => buildPostDisplays(posts), [posts])
+    const scrollMarginRef = useRef(0)
+    const sizeCacheRef = useRef(new Map<string, number>())
+    const [layoutReady, rerenderAfterLayout] = useReducer((value: number) => value + 1, 0)
+    const displays = useMemo(() => {
+      const built = buildPostDisplays(posts)
+      for (const display of built) {
+        if (!sizeCacheRef.current.has(display.id)) {
+          sizeCacheRef.current.set(display.id, estimatePostHeight(display.bodyHtml))
+        }
+      }
+      return built
+    }, [posts])
 
     useLayoutEffect(() => {
-      const updateScrollMargin = () => {
-        if (!listRef.current) return
-        setScrollMargin(getListScrollMargin(listRef.current))
-      }
+      if (!listRef.current) return
+      scrollMarginRef.current = getListScrollMargin(listRef.current)
+      rerenderAfterLayout()
+    }, [posts[0]?.thread_id])
 
-      updateScrollMargin()
-      window.addEventListener('resize', updateScrollMargin)
-
-      return () => {
-        window.removeEventListener('resize', updateScrollMargin)
-      }
-    }, [posts.length])
+    const scrollMargin = scrollMarginRef.current
+    const isReady = layoutReady > 0 && displays.length > 0
 
     const virtualizer = useWindowVirtualizer({
       count: displays.length,
-      estimateSize: (index) => estimatePostHeight(displays[index]?.bodyHtml ?? ''),
+      getItemKey: (index) => displays[index]?.id ?? index,
+      estimateSize: (index) => {
+        const display = displays[index]
+        if (!display) return MIN_ESTIMATED_POST_HEIGHT
+        return sizeCacheRef.current.get(display.id) ?? estimatePostHeight(display.bodyHtml)
+      },
       overscan: VIRTUAL_OVERSCAN,
-      scrollMargin: scrollMargin ?? 0,
-      measureElement: (element) => element.getBoundingClientRect().height,
+      scrollMargin,
+      useCachedMeasurements: true,
+      useScrollendEvent: true,
+      isScrollingResetDelay: 200,
+      measureElement: (element, entry, instance) => {
+        const height = measureVirtualElement(element, entry, instance)
+        const index = Number(element.getAttribute('data-index'))
+        const display = displays[index]
+        if (display) {
+          sizeCacheRef.current.set(display.id, height)
+        }
+        return height
+      },
     })
+
+    virtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false
 
     useImperativeHandle(
       ref,
@@ -81,11 +104,9 @@ export const PostList = memo(
       [displays.length, virtualizer],
     )
 
-    const margin = scrollMargin ?? 0
-
     return (
       <section ref={listRef} className="post-list">
-        {scrollMargin === null ? (
+        {!isReady ? (
           <p className="post-list-loading" aria-busy="true">
             読み込み中...
           </p>
@@ -107,7 +128,7 @@ export const PostList = memo(
                     top: 0,
                     left: 0,
                     width: '100%',
-                    transform: `translateY(${virtualItem.start - margin}px)`,
+                    transform: `translateY(${virtualItem.start - scrollMargin}px)`,
                   }}
                 >
                   <PostItem {...display} />
