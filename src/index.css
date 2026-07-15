@@ -198,8 +198,12 @@ a:visited {
   border-bottom: 1px dotted #ccc;
 }
 
-.post-op {
+.post-odd {
   background: #ffffee;
+}
+
+.post-even {
+  background: #f0f0e0;
 }
 
 .post-header {

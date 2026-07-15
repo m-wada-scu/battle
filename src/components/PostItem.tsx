@@ -11,12 +11,11 @@ export const PostItem = memo(function PostItem({
   formattedDate,
   bodyHtml,
   hasRevisionDiff,
-  isOp,
   intrinsicSize,
 }: PostItemProps) {
   return (
     <article
-      className={`post ${isOp ? 'post-op' : ''}`}
+      className={`post ${postNumber % 2 === 1 ? 'post-odd' : 'post-even'}`}
       id={`res${postNumber}`}
       style={intrinsicSize ? { containIntrinsicSize: `auto ${intrinsicSize}px` } : undefined}
     >

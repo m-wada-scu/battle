@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useThreadWatch } from '../hooks/useThreadWatch'
 import { NextThreadForm } from './NextThreadForm'
-import { PostList, type PostListHandle } from './PostList'
+import { PostList } from './PostList'
 import { ScrollJumpControls } from './ScrollJumpControls'
 import { WatchStatusText } from './WatchStatusText'
 import {
@@ -27,8 +27,6 @@ export function ThreadView() {
   const [switchingThread, setSwitchingThread] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
-  const topRef = useRef<HTMLDivElement>(null)
-  const postListRef = useRef<PostListHandle>(null)
   const isComplete = posts.some((post) => post.post_number >= 300)
 
   useThreadWatch(Boolean(thread?.is_active), isComplete)
@@ -102,15 +100,12 @@ export function ThreadView() {
   }, [loadThread])
 
   const scrollToTop = useCallback(() => {
-    if (posts.length > 0) {
-      postListRef.current?.scrollToTop()
-      return
-    }
-    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [posts.length])
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [])
 
   const scrollToBottom = useCallback(() => {
-    postListRef.current?.scrollToBottom()
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+    window.scrollTo({ top: Math.max(0, maxScroll), left: 0, behavior: 'smooth' })
   }, [])
 
   const handleManualTrigger = async () => {
@@ -171,7 +166,6 @@ export function ThreadView() {
 
   return (
     <div className={`thread${switchingThread ? ' thread-switching' : ''}`}>
-      <div ref={topRef} className="scroll-anchor scroll-anchor-top" aria-hidden="true" />
       <nav className="thread-history" aria-label="スレッド一覧">
         <span className="history-label">過去スレッド:</span>
         {archivedThreads.length === 0 ? (
@@ -239,7 +233,7 @@ export function ThreadView() {
 
       {error && <p className="inline-error">{error}</p>}
 
-      <PostList ref={postListRef} posts={posts} />
+      <PostList posts={posts} />
 
       {thread.is_active && isComplete && (
         <NextThreadForm onCreated={handleThreadCreated} onError={handleCreateThreadError} />
