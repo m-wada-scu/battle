@@ -65,13 +65,27 @@ async function releaseGenerationClaim(
 }
 
 export async function generateNextPostIfDue(
-  minIntervalMs: number,
+  minIntervalMs: number = GENERATION_MIN_INTERVAL_MS,
 ): Promise<RespondResult | SkippedResult> {
-  return generateNextPostWithInterval(minIntervalMs)
+  if (minIntervalMs !== GENERATION_MIN_INTERVAL_MS) {
+    throw new Error(
+      `Post generation interval must use GENERATION_MIN_INTERVAL_MS (${GENERATION_MIN_INTERVAL_MS})`,
+    )
+  }
+
+  return generateNextPostWithInterval(GENERATION_MIN_INTERVAL_MS)
 }
 
-export async function generateNextPost(): Promise<RespondResult | SkippedResult> {
-  return generateNextPostWithInterval(0)
+export async function requestNextGeneration(): Promise<RespondResult | SkippedResult> {
+  return generateNextPostIfDue(GENERATION_MIN_INTERVAL_MS)
+}
+
+export function toGenerationResponse(result: RespondResult | SkippedResult): Response {
+  if ('skipped' in result) {
+    return Response.json(result)
+  }
+
+  return Response.json({ ok: true, ...result })
 }
 
 async function generateNextPostWithInterval(

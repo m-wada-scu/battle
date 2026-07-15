@@ -1,4 +1,4 @@
-import { generateNextPostIfDue, GENERATION_MIN_INTERVAL_MS } from './lib/respond.js'
+import { POST as watchPOST } from './watch.js'
 
 function verifySecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -16,17 +16,6 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    const result = await generateNextPostIfDue(GENERATION_MIN_INTERVAL_MS)
-
-    if ('skipped' in result) {
-      return Response.json(result)
-    }
-
-    return Response.json({ ok: true, ...result })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[trigger]', message)
-    return Response.json({ ok: false, error: message }, { status: 500 })
-  }
+  // watch と同じ DB ガード経路（claim_post_generation + 15s）を通す
+  return watchPOST()
 }

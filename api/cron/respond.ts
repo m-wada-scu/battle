@@ -1,4 +1,4 @@
-import { generateNextPostIfDue, GENERATION_MIN_INTERVAL_MS } from '../lib/respond.js'
+import { requestNextGeneration, toGenerationResponse } from '../lib/respond.js'
 
 function verifyCronSecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -10,24 +10,22 @@ function verifyCronSecret(request: Request): boolean {
   return authHeader === `Bearer ${secret}`
 }
 
-export async function GET(request: Request): Promise<Response> {
-  if (!verifyCronSecret(request)) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+async function handleCronRequest(): Promise<Response> {
   try {
-    const result = await generateNextPostIfDue(GENERATION_MIN_INTERVAL_MS)
-
-    if ('skipped' in result) {
-      return Response.json(result)
-    }
-
-    return Response.json({ ok: true, ...result })
+    return toGenerationResponse(await requestNextGeneration())
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('[cron/respond]', message)
     return Response.json({ ok: false, error: message }, { status: 500 })
   }
+}
+
+export async function GET(request: Request): Promise<Response> {
+  if (!verifyCronSecret(request)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  return handleCronRequest()
 }
 
 export async function POST(request: Request): Promise<Response> {
