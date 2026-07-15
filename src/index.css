@@ -40,6 +40,19 @@ a:visited {
 .thread {
   background: #f0f0e0;
   border: 1px solid #aaa;
+  position: relative;
+}
+
+.thread-switching {
+  pointer-events: none;
+}
+
+.thread-switching::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
 }
 
 .thread-history {
@@ -180,6 +193,9 @@ a:visited {
 .post {
   padding: 6px 12px;
   border-bottom: 1px dotted #ccc;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+  contain: layout style paint;
 }
 
 .post-op {

@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { PostItem } from './PostItem'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useThreadWatch } from '../hooks/useThreadWatch'
+import { NextThreadForm } from './NextThreadForm'
+import { PostList } from './PostList'
+import { ScrollJumpControls } from './ScrollJumpControls'
+import { WatchStatusText } from './WatchStatusText'
 import {
   fetchActiveThread,
   fetchArchivedThreads,
@@ -14,54 +18,23 @@ const MODEL_LABEL: Record<string, string> = Object.fromEntries(
   Object.entries(PERSONAS).map(([model, persona]) => [model, persona.label]),
 )
 
-const WATCH_INTERVAL_MS = 15_000
-
 export function ThreadView() {
   const [thread, setThread] = useState<Thread | null>(null)
   const [activeThread, setActiveThread] = useState<Thread | null>(null)
   const [archivedThreads, setArchivedThreads] = useState<Thread[]>([])
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [switchingThread, setSwitchingThread] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
-  const [topic, setTopic] = useState('')
-  const [creatingThread, setCreatingThread] = useState(false)
-  const [watching, setWatching] = useState(
-    () => typeof document !== 'undefined' && document.visibilityState === 'visible',
-  )
   const topRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const scrollIdleTimerRef = useRef<number | undefined>(undefined)
-  const [jumpControlsIdle, setJumpControlsIdle] = useState(true)
   const isComplete = posts.some((post) => post.post_number >= 300)
 
-  useEffect(() => {
-    const onScroll = () => {
-      setJumpControlsIdle(false)
-      window.clearTimeout(scrollIdleTimerRef.current)
-      scrollIdleTimerRef.current = window.setTimeout(() => {
-        setJumpControlsIdle(true)
-      }, 700)
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.clearTimeout(scrollIdleTimerRef.current)
-    }
-  }, [])
-
-  const scrollToTop = () => {
-    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }
+  useThreadWatch(Boolean(thread?.is_active), isComplete)
 
   const loadThread = useCallback(async () => {
-    setLoading(true)
+    setInitialLoading(true)
     setError(null)
 
     try {
@@ -82,7 +55,7 @@ export function ThreadView() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '読み込みに失敗しました')
     } finally {
-      setLoading(false)
+      setInitialLoading(false)
     }
   }, [])
 
@@ -103,64 +76,10 @@ export function ThreadView() {
     })
   }, [thread])
 
-  useEffect(() => {
-    if (!thread?.is_active || isComplete) return
-
-    let intervalId: number | undefined
-    let inFlight = false
-
-    const tick = async () => {
-      if (document.visibilityState !== 'visible' || inFlight) return
-
-      inFlight = true
-      try {
-        await fetch('/api/watch', { method: 'POST' })
-      } catch {
-        // Realtime で表示更新。失敗しても次の tick で再試行
-      } finally {
-        inFlight = false
-      }
-    }
-
-    const startWatching = () => {
-      setWatching(true)
-      if (intervalId !== undefined) return
-      void tick()
-      intervalId = window.setInterval(() => void tick(), WATCH_INTERVAL_MS)
-    }
-
-    const stopWatching = () => {
-      setWatching(false)
-      if (intervalId !== undefined) {
-        window.clearInterval(intervalId)
-        intervalId = undefined
-      }
-    }
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        startWatching()
-      } else {
-        stopWatching()
-      }
-    }
-
-    if (document.visibilityState === 'visible') {
-      startWatching()
-    }
-
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
-    return () => {
-      stopWatching()
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [isComplete, thread])
-
   const handleSelectThread = async (selectedThread: Thread) => {
     if (selectedThread.id === thread?.id) return
 
-    setLoading(true)
+    setSwitchingThread(true)
     setError(null)
     try {
       const selectedPosts = await fetchPosts(selectedThread.id)
@@ -169,36 +88,18 @@ export function ThreadView() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'スレッドの読み込みに失敗しました')
     } finally {
-      setLoading(false)
+      setSwitchingThread(false)
     }
   }
 
-  const handleCreateThread = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const normalizedTopic = topic.trim().replace(/\s+/g, ' ')
-    if (!normalizedTopic) return
+  const handleCreateThreadError = useCallback((message: string) => {
+    setError(message)
+  }, [])
 
-    setCreatingThread(true)
+  const handleThreadCreated = useCallback(async () => {
     setError(null)
-    try {
-      const response = await fetch('/api/threads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: normalizedTopic }),
-      })
-      const body = (await response.json()) as { ok?: boolean; error?: string }
-      if (!response.ok || !body.ok) {
-        throw new Error(body.error ?? '次のスレッドを開始できませんでした')
-      }
-
-      setTopic('')
-      await loadThread()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '次のスレッドを開始できませんでした')
-    } finally {
-      setCreatingThread(false)
-    }
-  }
+    await loadThread()
+  }, [loadThread])
 
   const handleManualTrigger = async () => {
     setTriggering(true)
@@ -235,7 +136,7 @@ export function ThreadView() {
     }
   }
 
-  if (loading) {
+  if (initialLoading) {
     return <p className="status-message">読み込み中...</p>
   }
 
@@ -257,7 +158,7 @@ export function ThreadView() {
   const rotation = MODEL_ORDER.map((m) => MODEL_LABEL[m]).join(' → ')
 
   return (
-    <div className="thread">
+    <div className={`thread${switchingThread ? ' thread-switching' : ''}`}>
       <div ref={topRef} className="scroll-anchor scroll-anchor-top" aria-hidden="true" />
       <nav className="thread-history" aria-label="スレッド一覧">
         <span className="history-label">過去スレッド:</span>
@@ -270,6 +171,7 @@ export function ThreadView() {
               type="button"
               className={pastThread.id === thread.id ? 'history-link history-current' : 'history-link'}
               onClick={() => void handleSelectThread(pastThread)}
+              disabled={switchingThread}
             >
               {pastThread.title}
             </button>
@@ -280,6 +182,7 @@ export function ThreadView() {
             type="button"
             className="history-link active-thread-link"
             onClick={() => void handleSelectThread(activeThread)}
+            disabled={switchingThread}
           >
             現行スレッドへ戻る
           </button>
@@ -292,11 +195,11 @@ export function ThreadView() {
         <p className="thread-meta">
           1-{posts.length} / 300 |{' '}
           {isComplete ? (
-            <strong>完結・自動更新終了</strong>
+            <WatchStatusText isComplete variant="meta" />
           ) : (
             <>
               次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
-              {watching ? ' / 監視中・約15秒間隔' : ' / 未監視・約1時間間隔'}
+              <WatchStatusText isComplete={false} variant="meta" />
             </>
           )}
         </p>
@@ -307,13 +210,7 @@ export function ThreadView() {
         {isViewingArchive ? (
           <span className="toolbar-item">過去ログを表示中</span>
         ) : (
-          <span className={`toolbar-item ${watching ? 'toolbar-watching' : ''}`}>
-            {isComplete
-              ? '○ 自動更新終了'
-              : watching
-                ? '● 監視中（15秒おき）'
-                : '○ タブを開くと15秒おきに更新'}
-          </span>
+          <WatchStatusText isComplete={isComplete} variant="toolbar" />
         )}
         <span className="toolbar-item">表示: Realtime</span>
         {import.meta.env.DEV && !isComplete && (
@@ -330,28 +227,10 @@ export function ThreadView() {
 
       {error && <p className="inline-error">{error}</p>}
 
-      <section className="post-list">
-        {posts.map((post, index) => (
-          <PostItem key={post.id} post={post} allPosts={posts} postIndex={index} />
-        ))}
-        <div ref={bottomRef} className="post-list-end" aria-hidden="true" />
-      </section>
+      <PostList posts={posts} bottomRef={bottomRef} />
 
       {thread.is_active && isComplete && (
-        <form className="next-thread-form" onSubmit={(event) => void handleCreateThread(event)}>
-          <input
-            type="text"
-            value={topic}
-            maxLength={100}
-            required
-            aria-label="次スレのお題"
-            placeholder="次スレのお題"
-            onChange={(event) => setTopic(event.target.value)}
-          />
-          <button type="submit" disabled={creatingThread || !topic.trim()}>
-            {creatingThread ? '送信中...' : '送信'}
-          </button>
-        </form>
+        <NextThreadForm onCreated={handleThreadCreated} onError={handleCreateThreadError} />
       )}
 
       <footer className="thread-footer">
@@ -359,27 +238,7 @@ export function ThreadView() {
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
 
-      <div
-        className={`scroll-jump${jumpControlsIdle ? ' scroll-jump--idle' : ''}`}
-        aria-label="ページ移動"
-      >
-        <button
-          type="button"
-          className="scroll-jump-button"
-          aria-label="最上部へ移動"
-          onClick={scrollToTop}
-        >
-          ▲
-        </button>
-        <button
-          type="button"
-          className="scroll-jump-button"
-          aria-label="最下部へ移動"
-          onClick={scrollToBottom}
-        >
-          ▼
-        </button>
-      </div>
+      <ScrollJumpControls topRef={topRef} bottomRef={bottomRef} />
     </div>
   )
 }
