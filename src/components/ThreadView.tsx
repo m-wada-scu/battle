@@ -339,8 +339,8 @@ export function ThreadView() {
       {error && <p className="inline-error">{error}</p>}
 
       <section className="post-list">
-        {posts.map((post) => (
-          <PostItem key={post.id} post={post} />
+        {posts.map((post, index) => (
+          <PostItem key={post.id} post={post} allPosts={posts} postIndex={index} />
         ))}
         <div ref={bottomRef} className="post-list-end" aria-hidden="true" />
       </section>

@@ -193,6 +193,10 @@ a:visited {
 }
 
 .post-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
   margin-bottom: 4px;
   font-size: 12px;
 }
@@ -225,6 +229,21 @@ a:visited {
 .post-body .anchor {
   color: #0000ee;
   font-weight: bold;
+}
+
+.post-body .revision-highlight {
+  background: #ffff00;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.revision-diff-legend {
+  margin-left: auto;
+  color: #666;
+  font-size: 11px;
 }
 
 .thread-footer {

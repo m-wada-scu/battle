@@ -1,7 +1,14 @@
 import type { Post } from '../lib/supabase'
+import {
+  findPreviousRevisionBody,
+  highlightRevisionDiff,
+  splitRevisionContent,
+} from '../lib/revisionDiff'
 
 interface PostItemProps {
   post: Post
+  allPosts: Post[]
+  postIndex: number
 }
 
 function formatDate(iso: string): string {
@@ -24,8 +31,26 @@ function linkifyContent(content: string): string {
     .replace(/(&gt;&gt;\d+)/g, '<span class="anchor">$1</span>')
 }
 
-export function PostItem({ post }: PostItemProps) {
+function renderPostBody(post: Post, allPosts: Post[], postIndex: number): string {
+  const revisionParts = splitRevisionContent(post.content)
+  if (!revisionParts) {
+    return linkifyContent(post.content)
+  }
+
+  const previousRevisionBody = findPreviousRevisionBody(allPosts, postIndex)
+  const prefixHtml = linkifyContent(revisionParts.prefix)
+  const bodyHtml = previousRevisionBody
+    ? highlightRevisionDiff(previousRevisionBody, revisionParts.body)
+    : linkifyContent(revisionParts.body)
+
+  return `${prefixHtml}\n${bodyHtml}`
+}
+
+export function PostItem({ post, allPosts, postIndex }: PostItemProps) {
   const isOp = post.post_number === 1
+  const hasRevisionDiff =
+    splitRevisionContent(post.content) !== null &&
+    findPreviousRevisionBody(allPosts, postIndex) !== null
 
   return (
     <article className={`post ${isOp ? 'post-op' : ''}`} id={`res${post.post_number}`}>
@@ -34,10 +59,13 @@ export function PostItem({ post }: PostItemProps) {
         <span className="post-name">{post.display_name}</span>
         <span className="post-date">{formatDate(post.created_at)}</span>
         <span className="post-id">ID:********</span>
+        {hasRevisionDiff && (
+          <span className="revision-diff-legend">蛍光色 = 直前稿からの変更</span>
+        )}
       </div>
       <div
         className="post-body"
-        dangerouslySetInnerHTML={{ __html: linkifyContent(post.content) }}
+        dangerouslySetInnerHTML={{ __html: renderPostBody(post, allPosts, postIndex) }}
       />
     </article>
   )
