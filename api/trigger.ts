@@ -1,6 +1,4 @@
-import { generateNextPostIfDue } from './lib/respond.js'
-
-const CRON_INTERVAL_MS = 50 * 60 * 1000
+import { generateNextPost } from './lib/respond.js'
 
 function verifySecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -19,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const result = await generateNextPostIfDue(CRON_INTERVAL_MS)
+    const result = await generateNextPost()
 
     if ('skipped' in result) {
       return Response.json(result)

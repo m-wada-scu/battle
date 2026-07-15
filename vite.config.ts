@@ -7,15 +7,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/watch': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
       '/api/trigger': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
       '/api/threads': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
     },

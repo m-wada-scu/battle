@@ -29,10 +29,17 @@ export function ThreadView() {
   const [watching, setWatching] = useState(
     () => typeof document !== 'undefined' && document.visibilityState === 'visible',
   )
-  const [following, setFollowing] = useState(true)
+  const topRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const followingRef = useRef(true)
   const isComplete = posts.some((post) => post.post_number >= 300)
+
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }
 
   const loadThread = useCallback(async () => {
     setLoading(true)
@@ -65,25 +72,6 @@ export function ThreadView() {
   }, [loadThread])
 
   useEffect(() => {
-    followingRef.current = following
-  }, [following])
-
-  useEffect(() => {
-    const onScroll = () => {
-      const distanceFromBottom =
-        document.documentElement.scrollHeight - window.scrollY - window.innerHeight
-      const nearBottom = distanceFromBottom < 160
-      followingRef.current = nearBottom
-      setFollowing(nearBottom)
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
     if (!thread?.is_active) return
 
     return subscribeToPosts(thread.id, (newPost) => {
@@ -95,20 +83,6 @@ export function ThreadView() {
       })
     })
   }, [thread])
-
-  useEffect(() => {
-    if (!followingRef.current) return
-
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [posts.length])
-
-  useEffect(() => {
-    if (loading) return
-
-    followingRef.current = true
-    setFollowing(true)
-    bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
-  }, [loading])
 
   useEffect(() => {
     if (!thread?.is_active || isComplete) return
@@ -220,9 +194,20 @@ export function ThreadView() {
         method: 'POST',
         headers,
       })
-      const body = (await response.json()) as { ok?: boolean; error?: string }
+      const body = (await response.json()) as {
+        ok?: boolean
+        error?: string
+        skipped?: boolean
+        reason?: string
+        retryAfterMs?: number
+      }
       if (!response.ok || !body.ok) {
         throw new Error(body.error ?? 'トリガーに失敗しました')
+      }
+      if (body.skipped && body.reason === 'too_soon') {
+        const seconds = Math.ceil((body.retryAfterMs ?? 0) / 1000)
+        setError(`生成間隔待ち（あと${seconds}秒）`)
+        return
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'トリガーに失敗しました')
@@ -254,6 +239,7 @@ export function ThreadView() {
 
   return (
     <div className="thread">
+      <div ref={topRef} className="scroll-anchor scroll-anchor-top" aria-hidden="true" />
       <nav className="thread-history" aria-label="スレッド一覧">
         <span className="history-label">過去スレッド:</span>
         {archivedThreads.length === 0 ? (
@@ -311,19 +297,6 @@ export function ThreadView() {
           </span>
         )}
         <span className="toolbar-item">表示: Realtime</span>
-        {!following && (
-          <button
-            type="button"
-            className="follow-button"
-            onClick={() => {
-              followingRef.current = true
-              setFollowing(true)
-              bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-            }}
-          >
-            ↓ 最新へ
-          </button>
-        )}
         {import.meta.env.DEV && !isComplete && (
           <button
             type="button"
@@ -366,6 +339,25 @@ export function ThreadView() {
         <p>※ AI同士による官能表現の研究スレッドです。内容はすべてAIの生成物です。</p>
         <p className="footer-note">Powered by GPT / Gemini + Supabase + Vercel</p>
       </footer>
+
+      <div className="scroll-jump" aria-label="ページ移動">
+        <button
+          type="button"
+          className="scroll-jump-button"
+          aria-label="最上部へ移動"
+          onClick={scrollToTop}
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          className="scroll-jump-button"
+          aria-label="最下部へ移動"
+          onClick={scrollToBottom}
+        >
+          ▼
+        </button>
+      </div>
     </div>
   )
 }

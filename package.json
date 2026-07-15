@@ -5,10 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:full": "vercel dev",
+    "dev:api": "node scripts/vercel-dev-local.mjs",
+    "dev:full": "node scripts/vercel-dev-local.mjs",
+    "dev:local": "node scripts/dev-local.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:start": "npx supabase start",
+    "db:stop": "npx supabase stop",
+    "db:reset": "npx supabase db reset",
+    "seed:complete": "npx supabase db query --local --file scripts/seed-complete-thread.sql",
+    "seed:reset": "npx supabase db query --local --file scripts/reset-active-thread.sql"
   },
   "dependencies": {
     "@google/genai": "^2.11.0",
@@ -27,6 +34,7 @@
     "oxlint": "^1.71.0",
     "postcss": "^8.5.19",
     "tailwindcss": "^4.3.2",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   },

@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-top: 8px;
+  scroll-padding-bottom: 64px;
+}
+
 html,
 body {
   margin: 0;
@@ -121,17 +126,6 @@ a:visited {
   font-weight: bold;
 }
 
-.follow-button {
-  margin-left: auto;
-  font-size: 11px;
-  padding: 4px 8px;
-  cursor: pointer;
-  border: 1px solid #008000;
-  background: #fff;
-  color: #008000;
-  font-weight: bold;
-}
-
 .trigger-button {
   margin-left: auto;
   font-size: 11px;
@@ -232,12 +226,79 @@ a:visited {
 }
 
 .post-body .revision-highlight {
-  background: #ffff00;
+  background: #a8e6ff;
   color: inherit;
   padding: 0 1px;
   border-radius: 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+.scroll-anchor {
+  height: 0;
+}
+
+.scroll-jump {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.scroll-jump-button {
+  pointer-events: auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.scroll-jump-button:hover,
+.scroll-jump-button:focus-visible {
+  background: rgba(255, 255, 255, 0.78);
+  color: #000;
+  border-color: rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  outline: none;
+}
+
+.scroll-jump-button:active {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(0.96);
+}
+
+/* 広い画面: 本文左の余白に縦中央配置 */
+@media (min-width: 980px) {
+  .scroll-jump {
+    left: max(12px, calc((100vw - 900px) / 2 - 56px));
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 }
 
 .revision-diff-legend {

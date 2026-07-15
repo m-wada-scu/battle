@@ -60,7 +60,7 @@ export function PostItem({ post, allPosts, postIndex }: PostItemProps) {
         <span className="post-date">{formatDate(post.created_at)}</span>
         <span className="post-id">ID:********</span>
         {hasRevisionDiff && (
-          <span className="revision-diff-legend">蛍光色 = 直前稿からの変更</span>
+          <span className="revision-diff-legend">水色 = 直前稿からの変更</span>
         )}
       </div>
       <div
