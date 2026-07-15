@@ -10,6 +10,7 @@ import {
 } from './types.js'
 
 export const MAX_POST_NUMBER = 300
+export const GENERATION_MIN_INTERVAL_MS = 15_000
 
 async function generateContent(
   model: AiModel,

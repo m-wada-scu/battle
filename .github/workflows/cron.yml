@@ -16,7 +16,7 @@ jobs:
       - name: Trigger next AI post
         run: |
           echo "Triggered at $(date -u)"
-          response=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "${{ secrets.APP_URL }}/api/trigger" \
+          response=$(curl -sS -w "\nHTTP_CODE:%{http_code}" -X POST "${{ secrets.APP_URL }}/api/cron/respond" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           echo "$response"
           echo "$response" | grep -q 'HTTP_CODE:200' || exit 1

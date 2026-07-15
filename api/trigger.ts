@@ -1,4 +1,4 @@
-import { generateNextPost } from './lib/respond.js'
+import { generateNextPostIfDue, GENERATION_MIN_INTERVAL_MS } from './lib/respond.js'
 
 function verifySecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET
@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const result = await generateNextPost()
+    const result = await generateNextPostIfDue(GENERATION_MIN_INTERVAL_MS)
 
     if ('skipped' in result) {
       return Response.json(result)

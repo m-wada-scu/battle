@@ -1,10 +1,8 @@
-import { generateNextPostIfDue } from './lib/respond.js'
-
-const WATCH_INTERVAL_MS = 15_000
+import { generateNextPostIfDue, GENERATION_MIN_INTERVAL_MS } from './lib/respond.js'
 
 export async function POST(): Promise<Response> {
   try {
-    const result = await generateNextPostIfDue(WATCH_INTERVAL_MS)
+    const result = await generateNextPostIfDue(GENERATION_MIN_INTERVAL_MS)
 
     if ('skipped' in result) {
       return Response.json(result)
