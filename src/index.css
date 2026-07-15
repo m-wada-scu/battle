@@ -171,13 +171,6 @@ a:visited {
   width: 100%;
 }
 
-.post-list-virtual-window {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-}
-
 .post-list-virtual-item {
   box-sizing: border-box;
 }

@@ -107,8 +107,6 @@ export const PostList = memo(
       [displays.length, virtualizer],
     )
 
-    const virtualItems = virtualizer.getVirtualItems()
-
     return (
       <section ref={listRef} className="post-list">
         {!isReady ? (
@@ -120,25 +118,26 @@ export const PostList = memo(
             className="post-list-virtual-spacer"
             style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}
           >
-            {virtualItems.length > 0 && (
-              <div
-                className="post-list-virtual-window"
-                style={{
-                  transform: `translateY(${virtualItems[0].start - scrollMargin}px)`,
-                }}
-              >
-                {virtualItems.map((virtualItem) => (
-                  <div
-                    key={virtualItem.key}
-                    ref={virtualizer.measureElement}
-                    data-index={virtualItem.index}
-                    className="post-list-virtual-item"
-                  >
-                    <PostItem {...displays[virtualItem.index]} />
-                  </div>
-                ))}
-              </div>
-            )}
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const display = displays[virtualItem.index]
+              return (
+                <div
+                  key={virtualItem.key}
+                  ref={virtualizer.measureElement}
+                  data-index={virtualItem.index}
+                  className="post-list-virtual-item"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+                  }}
+                >
+                  <PostItem {...display} />
+                </div>
+              )
+            })}
           </div>
         )}
       </section>
