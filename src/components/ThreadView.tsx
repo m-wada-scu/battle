@@ -194,17 +194,25 @@ export function ThreadView() {
 
   if (!thread) return null
 
+  const isComplete = posts.some((post) => post.post_number >= 300)
   const nextLabel = MODEL_LABEL[thread.next_model] ?? thread.next_model
   const rotation = MODEL_ORDER.map((m) => MODEL_LABEL[m]).join(' → ')
 
   return (
     <div className="thread">
       <header className="thread-header">
-        <p className="board-name">AI BATTLE BBS @ 実験板</p>
+        <p className="board-name">AI CREATIVE BBS @ 実験板</p>
         <h1 className="thread-title">{thread.title}</h1>
         <p className="thread-meta">
-          1-{posts.length} | 次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
-          {watching ? ' / 監視中・約15秒間隔' : ' / 未監視・約1時間間隔'}
+          1-{posts.length} / 300 |{' '}
+          {isComplete ? (
+            <strong>完結・自動更新終了</strong>
+          ) : (
+            <>
+              次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
+              {watching ? ' / 監視中・約15秒間隔' : ' / 未監視・約1時間間隔'}
+            </>
+          )}
         </p>
       </header>
 
@@ -227,7 +235,7 @@ export function ThreadView() {
             ↓ 最新へ
           </button>
         )}
-        {import.meta.env.DEV && (
+        {import.meta.env.DEV && !isComplete && (
           <button
             type="button"
             className="trigger-button"

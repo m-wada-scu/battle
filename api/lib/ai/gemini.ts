@@ -22,7 +22,7 @@ export async function generateGeminiResponse(
     contents: prompt,
     config: {
       temperature: 0.95,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1200,
     },
   })
 

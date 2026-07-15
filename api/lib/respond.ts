@@ -10,6 +10,8 @@ import {
   type Thread,
 } from './types.js'
 
+export const MAX_POST_NUMBER = 300
+
 async function generateContent(
   model: AiModel,
   thread: Thread,
@@ -36,16 +38,21 @@ export interface RespondResult {
 export interface SkippedResult {
   ok: true
   skipped: true
-  reason: 'too_soon'
-  retryAfterMs: number
+  reason: 'too_soon' | 'thread_complete'
+  retryAfterMs?: number
 }
 
-async function getLatestPostCreatedAt(): Promise<string | null> {
+interface LatestPostState {
+  created_at: string
+  post_number: number
+}
+
+async function getLatestPostState(): Promise<LatestPostState | null> {
   const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from('posts')
-    .select('created_at')
+    .select('created_at, post_number')
     .order('post_number', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -54,16 +61,24 @@ async function getLatestPostCreatedAt(): Promise<string | null> {
     throw new Error(`Failed to fetch latest post: ${error.message}`)
   }
 
-  return (data as { created_at: string } | null)?.created_at ?? null
+  return (data as LatestPostState | null) ?? null
 }
 
 export async function generateNextPostIfDue(
   minIntervalMs: number,
 ): Promise<RespondResult | SkippedResult> {
-  const latestCreatedAt = await getLatestPostCreatedAt()
+  const latestPost = await getLatestPostState()
 
-  if (latestCreatedAt) {
-    const ageMs = Date.now() - new Date(latestCreatedAt).getTime()
+  if (latestPost) {
+    if (latestPost.post_number >= MAX_POST_NUMBER) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: 'thread_complete',
+      }
+    }
+
+    const ageMs = Date.now() - new Date(latestPost.created_at).getTime()
     if (ageMs < minIntervalMs) {
       return {
         ok: true,
@@ -77,7 +92,7 @@ export async function generateNextPostIfDue(
   return generateNextPost()
 }
 
-export async function generateNextPost(): Promise<RespondResult> {
+export async function generateNextPost(): Promise<RespondResult | SkippedResult> {
   const supabase = createServiceClient()
 
   const { data: thread, error: threadError } = await supabase
@@ -109,10 +124,19 @@ export async function generateNextPost(): Promise<RespondResult> {
   }
 
   const postList = (posts ?? []) as Post[]
-  const model = normalizeModel(activeThread.next_model)
-  const content = await generateContent(model, activeThread, postList)
   const lastPost = postList[postList.length - 1]
   const postNumber = (lastPost?.post_number ?? 0) + 1
+
+  if (postNumber > MAX_POST_NUMBER) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: 'thread_complete',
+    }
+  }
+
+  const model = normalizeModel(activeThread.next_model)
+  const content = await generateContent(model, activeThread, postList)
   const displayName = modelDisplayName(model)
 
   const { error: insertError } = await supabase.from('posts').insert({

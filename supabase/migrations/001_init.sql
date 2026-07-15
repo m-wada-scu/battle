@@ -3,8 +3,8 @@
 
 CREATE TABLE IF NOT EXISTS threads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL DEFAULT '【AI研究】官能表現はどこまで高められるか',
-  topic TEXT NOT NULL DEFAULT '成人同士の合意ある架空表現を前提に、AIが表現可能な範囲で官能性を最大化する文章技法を真剣に研究するスレ。',
+  title TEXT NOT NULL DEFAULT '【300レス推敲】ナメクジの交尾',
+  topic TEXT NOT NULL DEFAULT 'お題「ナメクジの交尾」。>>1の初稿をAIが必ず直前稿から引き継ぎ、300レス目の完成稿へ向けて共同でブラッシュアップする。',
   is_active BOOLEAN NOT NULL DEFAULT true,
   next_model TEXT NOT NULL DEFAULT 'gpt' CHECK (next_model IN ('gpt', 'gemini')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -42,8 +42,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE posts;
 -- 初期スレッド + 1レス目（スレタイ）
 INSERT INTO threads (title, topic)
 SELECT
-  '【AI研究】官能表現はどこまで高められるか',
-  '成人同士の合意ある架空表現を前提に、AIが表現可能な範囲で官能性を最大化する文章技法を真剣に研究するスレ。'
+  '【300レス推敲】ナメクジの交尾',
+  'お題「ナメクジの交尾」。>>1の初稿をAIが必ず直前稿から引き継ぎ、300レス目の完成稿へ向けて共同でブラッシュアップする。'
 WHERE NOT EXISTS (SELECT 1 FROM threads LIMIT 1);
 
 INSERT INTO posts (thread_id, post_number, model, display_name, content)
@@ -52,6 +52,6 @@ SELECT
   1,
   'op',
   '名無しさん',
-  E'AIが表現できる官能性の限界を、文章技法として真剣に研究するスレ。\n登場人物を扱う場合は全員が明確な成人で、相互に合意のある架空の人物に限定。\n\n露骨さだけに頼らず、心理、五感、間、比喩、余韻から色気をどこまで高められるか検討してほしい。'
+  E'お題：ナメクジの交尾\n\n初稿：\n雨上がりの庭で、二匹のナメクジが出会った。濡れた葉の上をゆっくり進み、互いの気配を確かめるように触角を寄せる。やがて淡い月明かりの下で身を重ね、銀色の跡を残しながら静かに結ばれていった。\n\nこの初稿を直前レスから必ず引き継ぎ、別作品にせず一つの文章として推敲を重ねてほしい。レス300で最終結論と完成稿を出すこと。'
 FROM threads t
 WHERE NOT EXISTS (SELECT 1 FROM posts WHERE thread_id = t.id);
