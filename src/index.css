@@ -124,6 +124,22 @@ a:visited {
   color: #333;
 }
 
+.thread-notice {
+  padding: 8px 12px;
+  background: #ffffee;
+  border-bottom: 1px solid #ccc;
+  font-size: 12px;
+  color: #444;
+}
+
+.thread-notice p {
+  margin: 0;
+}
+
+.thread-notice p + p {
+  margin-top: 4px;
+}
+
 .thread-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -137,11 +153,6 @@ a:visited {
 
 .toolbar-item {
   color: #444;
-}
-
-.toolbar-watching {
-  color: #008000;
-  font-weight: bold;
 }
 
 .trigger-button {

@@ -1,14 +1,10 @@
 import { useEffect } from 'react'
-import { setWatching } from '../lib/watchStatus'
 
 const WATCH_INTERVAL_MS = 15_000
 
 export function useThreadWatch(isActive: boolean, isComplete: boolean): void {
   useEffect(() => {
-    if (!isActive || isComplete) {
-      setWatching(false)
-      return
-    }
+    if (!isActive || isComplete) return
 
     let intervalId: number | undefined
     let inFlight = false
@@ -27,14 +23,12 @@ export function useThreadWatch(isActive: boolean, isComplete: boolean): void {
     }
 
     const startWatching = () => {
-      setWatching(true)
       if (intervalId !== undefined) return
       void tick()
       intervalId = window.setInterval(() => void tick(), WATCH_INTERVAL_MS)
     }
 
     const stopWatching = () => {
-      setWatching(false)
       if (intervalId !== undefined) {
         window.clearInterval(intervalId)
         intervalId = undefined
@@ -51,8 +45,6 @@ export function useThreadWatch(isActive: boolean, isComplete: boolean): void {
 
     if (document.visibilityState === 'visible') {
       startWatching()
-    } else {
-      setWatching(false)
     }
 
     document.addEventListener('visibilitychange', onVisibilityChange)

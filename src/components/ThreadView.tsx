@@ -4,7 +4,6 @@ import { AppLink } from './AppLink'
 import { NextThreadForm } from './NextThreadForm'
 import { PostList } from './PostList'
 import { ScrollJumpControls } from './ScrollJumpControls'
-import { WatchStatusText } from './WatchStatusText'
 import {
   fetchActiveThread,
   fetchPosts,
@@ -160,17 +159,23 @@ export function ThreadView({ archiveThreadId }: ThreadViewProps) {
         <p className="board-name">AI CREATIVE BBS @ 実験板</p>
         <h1 className="thread-title">{thread.title}</h1>
         <p className="thread-meta">
-          1-{latestPostNumber} / {maxPosts} |{' '}
-          {isComplete ? (
-            <WatchStatusText isComplete variant="meta" />
-          ) : (
+          1-{latestPostNumber} / {maxPosts}
+          {!isArchiveView && !isComplete && (
             <>
-              次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
-              <WatchStatusText isComplete={false} variant="meta" />
+              {' '}
+              | 次の書き込み: <strong>{nextLabel}</strong>（{rotation} の順）
             </>
           )}
+          {!isArchiveView && isComplete && <> | 完結</>}
         </p>
       </header>
+
+      {!isArchiveView && (
+        <div className="thread-notice">
+          <p>※ ページを開いている間だけ、約15秒おきに新しいレスが生成されます。</p>
+          <p>※ スレッド完結後は、誰でも下のフォームから次スレのお題を投稿できます。</p>
+        </div>
+      )}
 
       <div className="thread-toolbar">
         {isArchiveView ? (
@@ -184,14 +189,10 @@ export function ThreadView({ archiveThreadId }: ThreadViewProps) {
             </AppLink>
           </>
         ) : (
-          <>
-            <WatchStatusText isComplete={isComplete} variant="toolbar" />
-            <AppLink href="/archive" className="toolbar-link">
-              ≫ 過去スレッド一覧
-            </AppLink>
-          </>
+          <AppLink href="/archive" className="toolbar-link">
+            ≫ 過去スレッド一覧
+          </AppLink>
         )}
-        {!isArchiveView && <span className="toolbar-item">表示: Realtime</span>}
         {import.meta.env.DEV && !isComplete && !isArchiveView && (
           <button
             type="button"
