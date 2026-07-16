@@ -57,7 +57,7 @@ ${
       : nextPostNumber <= phaseThresholdEarly
         ? '- 前半工程。初稿の核を守りながら基礎を整える'
         : nextPostNumber <= phaseThresholdMid
-          ? '- 中盤工程。直前稿を精読し、官能性を段階的に深める'
+          ? '- 中盤工程。直前稿を精読し、段階的にエロくなるようにする'
           : '- 終盤工程。新要素を増やしすぎず、最もエロい完成形へ収束させる'
 }
 
