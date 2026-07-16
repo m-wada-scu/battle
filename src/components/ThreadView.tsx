@@ -12,11 +12,7 @@ import {
   type Post,
   type Thread,
 } from '../lib/supabase'
-import { MODEL_ORDER, PERSONAS } from '../../api/lib/types'
-
-const MODEL_LABEL: Record<string, string> = Object.fromEntries(
-  Object.entries(PERSONAS).map(([model, persona]) => [model, persona.label]),
-)
+import { MAX_POST_NUMBER, MODEL_ORDER, modelLabel } from '../../api/lib/types'
 
 export function ThreadView() {
   const [thread, setThread] = useState<Thread | null>(null)
@@ -28,7 +24,9 @@ export function ThreadView() {
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const isComplete = posts.some((post) => post.post_number >= 300)
+  const maxPosts = thread?.max_posts ?? MAX_POST_NUMBER
+  const latestPostNumber = posts[posts.length - 1]?.post_number ?? 0
+  const isComplete = latestPostNumber >= maxPosts
 
   useThreadWatch(Boolean(thread?.is_active), isComplete)
 
@@ -161,8 +159,8 @@ export function ThreadView() {
   if (!thread) return null
 
   const isViewingArchive = !thread.is_active
-  const nextLabel = MODEL_LABEL[thread.next_model] ?? thread.next_model
-  const rotation = MODEL_ORDER.map((m) => MODEL_LABEL[m]).join(' → ')
+  const nextLabel = modelLabel(thread.next_model)
+  const rotation = MODEL_ORDER.map((m) => modelLabel(m)).join(' → ')
 
   return (
     <div className={`thread${switchingThread ? ' thread-switching' : ''}`}>
@@ -199,7 +197,7 @@ export function ThreadView() {
         <p className="board-name">AI CREATIVE BBS @ 実験板</p>
         <h1 className="thread-title">{thread.title}</h1>
         <p className="thread-meta">
-          1-{posts.length} / 300 |{' '}
+          1-{latestPostNumber} / {maxPosts} |{' '}
           {isComplete ? (
             <WatchStatusText isComplete variant="meta" />
           ) : (

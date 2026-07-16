@@ -1,11 +1,10 @@
 import { GoogleGenAI } from '@google/genai'
 import { buildPrompt } from '../prompts.js'
-import type { AiModel, Post, Thread } from '../types.js'
+import type { Post, Thread } from '../types.js'
 
 export async function generateGeminiResponse(
   thread: Thread,
   posts: Post[],
-  persona: AiModel,
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
@@ -13,7 +12,7 @@ export async function generateGeminiResponse(
   }
 
   const client = new GoogleGenAI({ apiKey })
-  const prompt = buildPrompt(thread, posts, persona)
+  const prompt = buildPrompt(thread, posts, 'gemini')
 
   const model = process.env.GEMINI_MODEL ?? 'gemini-3.1-flash-lite'
 

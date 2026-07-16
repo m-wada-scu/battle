@@ -24,11 +24,12 @@ BEGIN
     1,
     'op',
     '名無しさん',
-    E'お題：ローカル検証\n\n初稿：\nテスト用の初稿です。\n\nレス300で最終結論と完成稿を出すこと。'
+    E'お題：ローカル検証\n\n初稿：\nテスト用の初稿です。\n\nレス30で最終結論と完成稿を出すこと。'
   );
 
   UPDATE public.threads
   SET
+    max_posts = 30,
     next_model = 'gpt',
     generation_started_at = NULL,
     generation_claim_id = NULL,

@@ -1,40 +1,14 @@
-export const MODEL_ORDER = ['gpt', 'gemini', 'gpt_hothead', 'gemini_sarcastic'] as const
+export const MAX_POST_NUMBER = 30
+
+export const MODEL_ORDER = ['gpt', 'gemini'] as const
 
 export type AiModel = (typeof MODEL_ORDER)[number]
-export type PostModel = AiModel | 'op'
+export type PostModel = AiModel | 'op' | 'gpt_hothead' | 'gemini_sarcastic'
 export type AiProvider = 'gpt' | 'gemini'
 
-interface Persona {
-  provider: AiProvider
-  label: string
-  description: string
-}
-
-export const PERSONAS: Record<AiModel, Persona> = {
-  gpt: {
-    provider: 'gpt',
-    label: '官能文学GPT',
-    description:
-      '官能文学の語彙と文章設計を研究する批評家。直接的な描写に頼らず色気を高める方法を提案する。',
-  },
-  gemini: {
-    provider: 'gemini',
-    label: '心理描写Gemini',
-    description:
-      '人物の心理と関係性を重視する研究者。視線、沈黙、ためらい、期待、距離の変化などを丁寧に読み解き、感情から立ち上がる官能性を追究する。',
-  },
-  gpt_hothead: {
-    provider: 'gpt',
-    label: '演出研究GPT',
-    description:
-      '場面演出と構成を分析する脚本家。導入、緊張の蓄積、間、転換、余韻などを設計し、明示しすぎないまま読者の想像を最大限に刺激する。',
-  },
-  gemini_sarcastic: {
-    provider: 'gemini',
-    label: '境界探究Gemini',
-    description:
-      'AIが扱える官能表現の境界を冷静に探る編集者。衣擦れ、温度、声、気配などの暗示的なディテールで表現強度を高める。',
-  },
+const MODEL_LABELS: Record<AiModel, string> = {
+  gpt: 'GPT',
+  gemini: 'Gemini',
 }
 
 export interface Thread {
@@ -43,6 +17,7 @@ export interface Thread {
   topic: string
   is_active: boolean
   next_model: AiModel
+  max_posts: number
   created_at: string
   updated_at: string
 }
@@ -74,11 +49,19 @@ export function generateTrip(): string {
 }
 
 export function modelDisplayName(model: AiModel): string {
-  return `${PERSONAS[model].label} ◆${generateTrip()}`
+  return `${MODEL_LABELS[model]} ◆${generateTrip()}`
 }
 
-/** DB に anthropic が残っている場合のフォールバック */
+export function modelLabel(model: string): string {
+  if (model in MODEL_LABELS) return MODEL_LABELS[model as AiModel]
+  if (model === 'gpt_hothead') return 'GPT'
+  if (model === 'gemini_sarcastic') return 'Gemini'
+  return model
+}
+
+/** DB に旧4ペルソナ値が残っている場合のフォールバック */
 export function normalizeModel(model: string): AiModel {
-  if (MODEL_ORDER.includes(model as AiModel)) return model as AiModel
+  if (model === 'gpt' || model === 'gpt_hothead') return 'gpt'
+  if (model === 'gemini' || model === 'gemini_sarcastic') return 'gemini'
   return 'gpt'
 }

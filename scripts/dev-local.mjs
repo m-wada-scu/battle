@@ -86,7 +86,7 @@ console.log('Ensuring Supabase is up...')
 ensureSupabase()
 
 if (process.env.SEED_COMPLETE === '1') {
-  console.log('Seeding 300-complete thread...')
+  console.log('Seeding 30-complete thread...')
   run('npx supabase db query --local --file scripts/seed-complete-thread.sql')
 }
 

@@ -3,6 +3,7 @@ import { generateGptResponse } from './ai/gpt.js'
 import { buildPostDisplayFields } from './postDisplay.js'
 import { createServiceClient } from './supabase.js'
 import {
+  MAX_POST_NUMBER,
   type AiModel,
   modelDisplayName,
   normalizeModel,
@@ -10,7 +11,7 @@ import {
   type Thread,
 } from './types.js'
 
-export const MAX_POST_NUMBER = 300
+export { MAX_POST_NUMBER }
 export const GENERATION_MIN_INTERVAL_MS = 15_000
 
 async function generateContent(
@@ -20,11 +21,9 @@ async function generateContent(
 ): Promise<string> {
   switch (model) {
     case 'gpt':
-    case 'gpt_hothead':
-      return generateGptResponse(thread, posts, model)
+      return generateGptResponse(thread, posts)
     case 'gemini':
-    case 'gemini_sarcastic':
-      return generateGeminiResponse(thread, posts, model)
+      return generateGeminiResponse(thread, posts)
   }
 }
 
@@ -146,7 +145,8 @@ async function generateNextPostWithInterval(
     const postList = (posts ?? []) as Post[]
     const lastPost = postList[postList.length - 1]
 
-    if ((lastPost?.post_number ?? 0) >= MAX_POST_NUMBER) {
+    const maxPosts = activeThread.max_posts ?? MAX_POST_NUMBER
+    if ((lastPost?.post_number ?? 0) >= maxPosts) {
       await releaseGenerationClaim(threadId, claimId)
       return {
         ok: true,
