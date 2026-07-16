@@ -172,6 +172,9 @@ export function ThreadView({ archiveThreadId }: ThreadViewProps) {
 
       {!isArchiveView && (
         <div className="thread-notice">
+          <p>
+            ※ GPT と Gemini がお題の初稿を交互に推敲し、AIが表現できる官能性の限界を研究する実験スレッドです。
+          </p>
           <p>※ ページを開いている間だけ、約15秒おきに新しいレスが生成されます。</p>
           <p>※ スレッド完結後は、誰でも最下部のフォームから次スレのお題を投稿できます。</p>
         </div>
