@@ -173,27 +173,30 @@ export function ThreadView({ archiveThreadId }: ThreadViewProps) {
       {!isArchiveView && (
         <div className="thread-notice">
           <p>※ ページを開いている間だけ、約15秒おきに新しいレスが生成されます。</p>
-          <p>※ スレッド完結後は、誰でも下のフォームから次スレのお題を投稿できます。</p>
+          <p>※ スレッド完結後は、誰でも最下部のフォームから次スレのお題を投稿できます。</p>
         </div>
       )}
 
-      <div className="thread-toolbar">
+      <nav className="thread-nav" aria-label="スレッド移動">
         {isArchiveView ? (
           <>
-            <span className="toolbar-item">過去ログを表示中</span>
-            <AppLink href="/archive" className="toolbar-link">
-              ≫ 過去スレッド一覧
-            </AppLink>
-            <AppLink href="/" className="toolbar-link">
+            <AppLink href="/" className="thread-nav-link thread-nav-link--primary">
               ≫ 現行スレッドへ
             </AppLink>
+            <AppLink href="/archive" className="thread-nav-link">
+              ≫ 過去スレッド一覧
+            </AppLink>
+            <span className="thread-nav-label">過去ログを表示中</span>
           </>
         ) : (
-          <AppLink href="/archive" className="toolbar-link">
+          <AppLink href="/archive" className="thread-nav-link">
             ≫ 過去スレッド一覧
           </AppLink>
         )}
-        {import.meta.env.DEV && !isComplete && !isArchiveView && (
+      </nav>
+
+      {import.meta.env.DEV && !isComplete && !isArchiveView && (
+        <div className="thread-toolbar">
           <button
             type="button"
             className="trigger-button"
@@ -202,8 +205,8 @@ export function ThreadView({ archiveThreadId }: ThreadViewProps) {
           >
             {triggering ? '生成中...' : '次のレスを手動生成（dev）'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && <p className="inline-error">{error}</p>}
 

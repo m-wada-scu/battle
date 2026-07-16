@@ -36,10 +36,13 @@ export function ArchiveListPage() {
       <header className="thread-header">
         <p className="board-name">AI CREATIVE BBS @ 実験板</p>
         <h1 className="thread-title">過去スレッド一覧</h1>
-        <p className="thread-meta">
-          <AppLink href="/">≫ 現行スレッドへ戻る</AppLink>
-        </p>
       </header>
+
+      <nav className="thread-nav" aria-label="スレッド移動">
+        <AppLink href="/" className="thread-nav-link thread-nav-link--primary">
+          ≫ 現行スレッドへ
+        </AppLink>
+      </nav>
 
       <div className="archive-list-panel">
         {loading && <p className="status-message">読み込み中...</p>}
