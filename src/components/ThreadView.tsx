@@ -1,67 +1,71 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useThreadWatch } from '../hooks/useThreadWatch'
+import { AppLink } from './AppLink'
 import { NextThreadForm } from './NextThreadForm'
 import { PostList } from './PostList'
 import { ScrollJumpControls } from './ScrollJumpControls'
 import { WatchStatusText } from './WatchStatusText'
 import {
   fetchActiveThread,
-  fetchArchivedThreads,
   fetchPosts,
+  fetchThreadById,
   subscribeToPosts,
   type Post,
   type Thread,
 } from '../lib/supabase'
 import { MAX_POST_NUMBER, MODEL_ORDER, modelLabel } from '../../api/lib/types'
 
-export function ThreadView() {
+interface ThreadViewProps {
+  archiveThreadId?: string
+}
+
+export function ThreadView({ archiveThreadId }: ThreadViewProps) {
   const [thread, setThread] = useState<Thread | null>(null)
-  const [activeThread, setActiveThread] = useState<Thread | null>(null)
-  const [archivedThreads, setArchivedThreads] = useState<Thread[]>([])
   const [posts, setPosts] = useState<Post[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
-  const [switchingThread, setSwitchingThread] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [triggering, setTriggering] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const isArchiveView = Boolean(archiveThreadId)
   const maxPosts = thread?.max_posts ?? MAX_POST_NUMBER
   const latestPostNumber = posts[posts.length - 1]?.post_number ?? 0
   const isComplete = latestPostNumber >= maxPosts
 
-  useThreadWatch(Boolean(thread?.is_active), isComplete)
+  useThreadWatch(Boolean(thread?.is_active && !isArchiveView), isComplete)
 
   const loadThread = useCallback(async () => {
     setInitialLoading(true)
     setError(null)
 
     try {
-      const [currentThread, pastThreads] = await Promise.all([
-        fetchActiveThread(),
-        fetchArchivedThreads(),
-      ])
-      if (!currentThread) {
-        setError('スレッドが見つかりません。Supabase のマイグレーションを実行してください。')
+      const loadedThread = archiveThreadId
+        ? await fetchThreadById(archiveThreadId)
+        : await fetchActiveThread()
+
+      if (!loadedThread) {
+        setError(
+          archiveThreadId
+            ? 'スレッドが見つかりません。'
+            : 'スレッドが見つかりません。Supabase のマイグレーションを実行してください。',
+        )
         return
       }
 
-      setActiveThread(currentThread)
-      setArchivedThreads(pastThreads)
-      setThread(currentThread)
-      const initialPosts = await fetchPosts(currentThread.id)
-      setPosts(initialPosts)
+      setThread(loadedThread)
+      setPosts(await fetchPosts(loadedThread.id))
     } catch (err) {
       setError(err instanceof Error ? err.message : '読み込みに失敗しました')
     } finally {
       setInitialLoading(false)
     }
-  }, [])
+  }, [archiveThreadId])
 
   useEffect(() => {
     void loadThread()
   }, [loadThread])
 
   useEffect(() => {
-    if (!thread?.is_active) return
+    if (!thread?.is_active || isArchiveView) return
 
     return subscribeToPosts(thread.id, (newPost) => {
       setPosts((current) => {
@@ -71,23 +75,7 @@ export function ThreadView() {
         return [...current, newPost].sort((a, b) => a.post_number - b.post_number)
       })
     })
-  }, [thread])
-
-  const handleSelectThread = async (selectedThread: Thread) => {
-    if (selectedThread.id === thread?.id) return
-
-    setSwitchingThread(true)
-    setError(null)
-    try {
-      const selectedPosts = await fetchPosts(selectedThread.id)
-      setThread(selectedThread)
-      setPosts(selectedPosts)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'スレッドの読み込みに失敗しました')
-    } finally {
-      setSwitchingThread(false)
-    }
-  }
+  }, [isArchiveView, thread])
 
   const handleCreateThreadError = useCallback((message: string) => {
     setError(message)
@@ -152,47 +140,22 @@ export function ThreadView() {
         <button type="button" onClick={() => void loadThread()}>
           再読み込み
         </button>
+        {isArchiveView && (
+          <p className="error-nav">
+            <AppLink href="/archive">≫ 過去スレッド一覧</AppLink>
+          </p>
+        )}
       </div>
     )
   }
 
   if (!thread) return null
 
-  const isViewingArchive = !thread.is_active
   const nextLabel = modelLabel(thread.next_model)
   const rotation = MODEL_ORDER.map((m) => modelLabel(m)).join(' → ')
 
   return (
-    <div className={`thread${switchingThread ? ' thread-switching' : ''}`}>
-      <nav className="thread-history" aria-label="スレッド一覧">
-        <span className="history-label">過去スレッド:</span>
-        {archivedThreads.length === 0 ? (
-          <span className="history-empty">まだありません</span>
-        ) : (
-          archivedThreads.map((pastThread) => (
-            <button
-              key={pastThread.id}
-              type="button"
-              className={pastThread.id === thread.id ? 'history-link history-current' : 'history-link'}
-              onClick={() => void handleSelectThread(pastThread)}
-              disabled={switchingThread}
-            >
-              {pastThread.title}
-            </button>
-          ))
-        )}
-        {isViewingArchive && activeThread && (
-          <button
-            type="button"
-            className="history-link active-thread-link"
-            onClick={() => void handleSelectThread(activeThread)}
-            disabled={switchingThread}
-          >
-            現行スレッドへ戻る
-          </button>
-        )}
-      </nav>
-
+    <div className="thread">
       <header className="thread-header">
         <p className="board-name">AI CREATIVE BBS @ 実験板</p>
         <h1 className="thread-title">{thread.title}</h1>
@@ -210,14 +173,26 @@ export function ThreadView() {
       </header>
 
       <div className="thread-toolbar">
-        <span className="toolbar-item">☺ 見守る名無し</span>
-        {isViewingArchive ? (
-          <span className="toolbar-item">過去ログを表示中</span>
+        {isArchiveView ? (
+          <>
+            <span className="toolbar-item">過去ログを表示中</span>
+            <AppLink href="/archive" className="toolbar-link">
+              ≫ 過去スレッド一覧
+            </AppLink>
+            <AppLink href="/" className="toolbar-link">
+              ≫ 現行スレッドへ
+            </AppLink>
+          </>
         ) : (
-          <WatchStatusText isComplete={isComplete} variant="toolbar" />
+          <>
+            <WatchStatusText isComplete={isComplete} variant="toolbar" />
+            <AppLink href="/archive" className="toolbar-link">
+              ≫ 過去スレッド一覧
+            </AppLink>
+          </>
         )}
-        <span className="toolbar-item">表示: Realtime</span>
-        {import.meta.env.DEV && !isComplete && (
+        {!isArchiveView && <span className="toolbar-item">表示: Realtime</span>}
+        {import.meta.env.DEV && !isComplete && !isArchiveView && (
           <button
             type="button"
             className="trigger-button"
@@ -233,7 +208,7 @@ export function ThreadView() {
 
       <PostList posts={posts} />
 
-      {thread.is_active && isComplete && (
+      {thread.is_active && isComplete && !isArchiveView && (
         <NextThreadForm onCreated={handleThreadCreated} onError={handleCreateThreadError} />
       )}
 

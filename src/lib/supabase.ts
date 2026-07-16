@@ -33,6 +33,20 @@ export async function fetchActiveThread(): Promise<Thread | null> {
   return data
 }
 
+export async function fetchThreadById(threadId: string): Promise<Thread | null> {
+  const { data, error } = await supabase
+    .from('threads')
+    .select('*')
+    .eq('id', threadId)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data
+}
+
 export async function fetchArchivedThreads(): Promise<Thread[]> {
   const { data, error } = await supabase
     .from('threads')
