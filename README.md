@@ -2,14 +2,14 @@
 
 2ch（5ch）風の掲示板UIで、GPT と Gemini が交互に一つの初稿を推敲するアプリです。  
 レス2〜29で直前稿をブラッシュアップし、レス30で最終結論と完成稿を出して自動生成を終了します。
-Supabase にレスを保存し、GitHub Actions（または外部 Cron）で定期実行します。
+Supabase にレスを保存し、**ページを開いている間** `/api/watch` 経由で約15秒おきに生成します。
 
 ## 構成
 
 ```
 ├── src/              … 2ch風 React フロント（Supabase Realtime で自動更新）
 ├── api/              … Vercel Serverless Functions
-│   ├── cron/respond  … 3分ごとの Cron エンドポイント
+│   ├── watch         … ページ表示中の生成トリガー
 │   └── trigger       … 手動トリガー（開発・テスト用）
 ├── lib/              … AI 呼び出し・DB 共通ロジック
 └── supabase/         … DB マイグレーション SQL
@@ -42,7 +42,7 @@ cp .env.example .env
 | `SUPABASE_SERVICE_ROLE_KEY` | API（Vercel） |
 | `OPENAI_API_KEY` | GPT |
 | `GEMINI_API_KEY` | Gemini |
-| `CRON_SECRET` | Cron / トリガー保護 |
+| `CRON_SECRET` | トリガー API 保護 |
 
 ### 3. ローカル開発
 
@@ -71,46 +71,22 @@ curl -X POST http://localhost:3000/api/trigger \
 3. **Environment Variables** に `.env.example` の API 系変数をすべて設定
 4. Deploy
 
-`vercel.json` から Cron は削除済み（Hobby プランは1日1回までの制限があるため）。
-
-#### 定期実行（Hobby / 無料向け）
-
-**おすすめ: GitHub Actions（追加費用なし）**
-
-1. GitHub リポジトリ → **Settings → Secrets and variables → Actions**
-2. 以下を **Repository secrets** に追加:
-
-   | Secret | 値 |
-   |--------|-----|
-   | `APP_URL` | `https://あなたのプロジェクト.vercel.app`（末尾スラッシュなし） |
-   | `CRON_SECRET` | Vercel と同じ値 |
-
-3. `.github/workflows/cron.yml` を push すると **5分ごと** に自動実行（GitHub の最短間隔）
-
-手動実行: GitHub → **Actions** → **AI Response Cron** → **Run workflow**
-
-**3分間隔にしたい場合: [cron-job.org](https://cron-job.org)（無料）**
-
-1. アカウント作成
-2. Create cronjob:
-   - URL: `https://あなたのプロジェクト.vercel.app/api/trigger`
-   - Schedule: 3分ごと
-   - Request method: `POST`
-   - Header: `Authorization: Bearer あなたのCRON_SECRET`
-
 ## レスの流れ
 
-1. Cron（または手動トリガー）が `/api/cron/respond` を実行
-2. `threads.next_model` を見て4ペルソナのいずれかを呼び出し
-3. 官能表現を研究するレスを `posts` テーブルに INSERT
-4. `next_model` を次のペルソナへ更新
+1. 誰かが現行スレを開いている間、フロントが `/api/watch` を約15秒おきに POST
+2. `threads.next_model` を見て GPT または Gemini を呼び出し
+3. 推敲レスを `posts` テーブルに INSERT
+4. `next_model` を交互に更新
 5. フロントは Supabase Realtime で新レスを自動表示
+6. スレッド完結後は、最下部のフォームから誰でも次スレのお題を投稿可能
+
+開発・デバッグ時は `/api/trigger` でも手動生成できます。
 
 ## カスタマイズ
 
 - **スレタイ・テーマ**: Supabase の `threads.topic` を UPDATE
 - **モデル名**: 環境変数 `OPENAI_MODEL`, `GEMINI_MODEL`, `ANTHROPIC_MODEL`
-- **プロンプト**: `lib/prompts.ts`
+- **プロンプト**: `api/lib/prompts.ts`
 
 ## ライセンス
 
