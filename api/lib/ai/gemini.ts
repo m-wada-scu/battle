@@ -22,6 +22,7 @@ export async function generateGeminiResponse(
     config: {
       temperature: 0.95,
       maxOutputTokens: 1200,
+      tools: [{ googleSearch: {} }],
     },
   })
 

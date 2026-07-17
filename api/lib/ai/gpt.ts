@@ -14,14 +14,16 @@ export async function generateGptResponse(
   const client = new OpenAI({ apiKey })
   const prompt = buildPrompt(thread, posts, 'gpt')
 
-  const completion = await client.chat.completions.create({
+  const response = await client.responses.create({
     model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
+    input: prompt,
+    tools: [{ type: 'web_search' }],
+    tool_choice: 'required',
     temperature: 0.95,
-    max_completion_tokens: 1200,
+    max_output_tokens: 1200,
   })
 
-  const content = completion.choices[0]?.message?.content?.trim()
+  const content = response.output_text?.trim()
   if (!content) {
     throw new Error('GPT returned empty response')
   }
